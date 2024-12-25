@@ -1,0 +1,57 @@
+{
+  "manifest_version": 3,
+  "name": "AZ AI Doubt Solver",
+  "version": "0.1",
+  "author": "Laksh Sachdeva",
+  "description": "A Doubt Solver AI bot for problems on AZ",
+  "permissions": [
+    "storage",
+    "tabs",
+    "clipboardWrite", 
+    "clipboardRead"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://maang.in/*"
+      ],
+      "js": [
+        "content.js",
+        "inject.js"
+      ]
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "monaco-editor/min/vs/**/*", 
+        "assets/bot.png",
+        "popup.css",
+        "popup.js",
+        "assets/image.png",
+        "assets/profile.png",
+        "inject.js",
+        "assets/send.png",
+        "assets/copy.png"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ],
+  "action": {
+    "default_icon": {
+      "16": "assets/ext-icon.png",
+      "24": "assets/ext-icon.png",
+      "32": "assets/ext-icon.png"
+    },
+    "default_popup": "popup.html",
+    "default_title": "AZ AI Bot"
+  },
+  "host_permissions": [
+    "https://generativelanguage.googleapis.com/*"
+  ]
+}

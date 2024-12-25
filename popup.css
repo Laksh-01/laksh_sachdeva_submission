@@ -1,0 +1,33 @@
+/* Global font setup */
+body {
+    font-family: 'Poppins', 'Roboto', 'Inter', 'Rubik', 'Mulish', 'DM Sans', 'Caveat', sans-serif;
+    font-size: 16px; /* Default font size */
+    line-height: 1.6; /* Adjust line height for readability */
+    color: #333; /* Set default font color */
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Example: Customize specific elements */
+h1, h2, h3 {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+}
+
+p {
+    font-family: 'Roboto', sans-serif;
+    font-weight: 400;
+}
+
+
+button {
+    font-family: 'Rubik', sans-serif;
+    font-weight: 500;
+}
+
+blockquote {
+    font-family: 'Caveat', cursive;
+    font-size: 1.2em;
+    font-style: italic;
+}
