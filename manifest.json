@@ -22,8 +22,10 @@
     }
   ],
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "background.js",
+    "scrips":["dist/bundle.js"]
   },
+
   "web_accessible_resources": [
     {
       "resources": [
@@ -35,7 +37,8 @@
         "assets/profile.png",
         "inject.js",
         "assets/send.png",
-        "assets/copy.png"
+        "assets/copy.png",
+        "webpack.config.js"
       ],
       "matches": [
         "<all_urls>"

@@ -1,7 +1,7 @@
 // background.js
 chrome.runtime.onInstalled.addListener(() => {
-    const AZ_AI_KEY = process.env.API_KEY; // This is now pulled from the .env file
-
+    const AZ_AI_KEY = process.env.AZ_AI_KEY; // This is now pulled from the .env file
+    console.log(AZ_AI_KEY);
     // Store API key securely in chrome.storage.local
     chrome.storage.local.set({ 'AZ_AI_KEY': AZ_AI_KEY }, function() {
         console.log("API Key stored securely.");
