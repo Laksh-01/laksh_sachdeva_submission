@@ -27,3 +27,4 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         // Process or store the editorialCode as needed
     }
 });
+
