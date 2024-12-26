@@ -23,7 +23,7 @@
   ],
   "background": {
     "service_worker": "background.js",
-    "scrips":["dist/bundle.js"]
+    "scrips":"dist/bundle.js"
   },
 
   "web_accessible_resources": [
@@ -37,8 +37,10 @@
         "assets/profile.png",
         "inject.js",
         "assets/send.png",
-        "assets/copy.png",
-        "webpack.config.js"
+        "assets/chatbot.png",
+        "assets/cancel.png",
+        "assets/bin.png",
+        "assets/cpy.png"
       ],
       "matches": [
         "<all_urls>"
@@ -47,9 +49,9 @@
   ],
   "action": {
     "default_icon": {
-      "16": "assets/ext-icon.png",
-      "24": "assets/ext-icon.png",
-      "32": "assets/ext-icon.png"
+      "16": "assets/chatbot.png",
+      "24": "assets/chatbot.png",
+      "32": "assets/chatbot.png"
     },
     "default_popup": "popup.html",
     "default_title": "AZ AI Bot"
