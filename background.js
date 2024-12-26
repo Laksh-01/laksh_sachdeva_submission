@@ -1,20 +1,29 @@
-// Store the API key securely in chrome.storage.local when extension is installed
+// background.js
 chrome.runtime.onInstalled.addListener(() => {
-    const AZ_AI_KEY = "AIzaSyCzGpkec-5mmpmDWVkB-LzNgqonXe2Kr_g"; // Store your actual secret key securely
+    const AZ_AI_KEY = process.env.API_KEY; // This is now pulled from the .env file
+
+    // Store API key securely in chrome.storage.local
     chrome.storage.local.set({ 'AZ_AI_KEY': AZ_AI_KEY }, function() {
         console.log("API Key stored securely.");
     });
 });
 
-
-// background.js
-// background.js
+// Listen for incoming messages and handle them
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.type === "api-code-extracted") {
         console.log("Received extracted code:", message.editorialCode);
 
+        // Fetch the API key from storage when needed
+        chrome.storage.local.get('AZ_AI_KEY', function(result) {
+            const apiKey = result.AZ_AI_KEY;
+            if (apiKey) {
+                // Use the API key securely (e.g., make API requests)
+                console.log("API Key fetched:", apiKey);
+            } else {
+                console.error("API Key not found.");
+            }
+        });
+
         // Process or store the editorialCode as needed
     }
 });
-
-
