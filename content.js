@@ -1,6 +1,6 @@
 const botImgURL = chrome.runtime.getURL("assets/bot.png");
 
-const bot1ImgURL = chrome.runtime.getURL("assets/chatbot.png");
+const bot1ImgURL = chrome.runtime.getURL("assets/chatbot1.png");
 const profileImgUrl = chrome.runtime.getURL("assets/profile.png");
 
 const sendImgUrl = chrome.runtime.getURL("assets/send.png");
@@ -14,12 +14,15 @@ const copyImgUrl = chrome.runtime.getURL("assets/cpy.png");
 
 let currentProblemId = null;
 
-
 let isScriptInjected = false;
+
+let miniPageReference = false; 
+
+
+
 
 function injectScriptAndListenForXHR() {
   if (isScriptInjected) return;
-
   const script = document.createElement('script');
   script.src = chrome.runtime.getURL("inject.js"); 
   document.documentElement.appendChild(script);
@@ -27,29 +30,28 @@ function injectScriptAndListenForXHR() {
     console.log('inject.js script injected');
     isScriptInjected = true;  
   };
-
   script.onerror = () => {
     console.error('Failed to inject inject.js script');
   };
 }
 window.addEventListener('load', injectScriptAndListenForXHR);
-
-
 window.addEventListener('apiCodeExtracted', (event) => {
-    const editorialCode = event.detail.editorialCode;
+    const sourceCode = event.detail.sourceCode;  // Updated variable name
 
-    // Store the editorialCode in localStorage
-    localStorage.setItem('editorialCode', editorialCode);
+    if (sourceCode) {
+        localStorage.setItem('editorialCode', sourceCode); // Store sourceCode (or editorialCode)
+        console.log("Source Code stored in localStorage:", sourceCode);
 
-    // Optionally log the stored value
-    // console.log("Editorial Code stored in localStorage:", editorialCode);
-
-    // Send the editorial code to the background script
-    chrome.runtime.sendMessage({
-        type: 'api-code-extracted',
-        editorialCode: editorialCode
-    });
+        chrome.runtime.sendMessage({
+            type: 'api-code-extracted',
+            sourceCode: sourceCode  // Send the correct field (sourceCode)
+        });
+    } else {
+        console.log("No source code to store.");
+    }
 });
+
+
 
 
 const observer = new MutationObserver(() => {
@@ -58,16 +60,16 @@ const observer = new MutationObserver(() => {
     get_code_from_localStorage();
 });
 
-
 // Observe the body for changes (child elements added or removed)
-observer.observe(document.body, { childList: true, subtree: true });
 
+observer.observe(document.body, { childList: true, subtree: true });
 function get_code_from_localStorage() {
     // Retrieve the code from localStorage
     const code_written_by_user = localStorage.getItem('editorialCode');
     
     // Check if the code exists in localStorage
     if (code_written_by_user) {
+        console.log("Code retrieved from localStorage:", code_written_by_user);
         return code_written_by_user;
     } else {
         console.log('No code found in localStorage');
@@ -112,13 +114,21 @@ function generateUniqueId(input) {
     return Math.abs(hash); // Ensure the ID is positive
 }
 
+
+
+
+
+// Function to add or update the bot button
 function addBotButton() {
+    let mode = true;
     if (!onProblemsPage() || document.getElementById("add-bot-button")) return; // Only add button on problem pages
+
 
     // Utility function to apply multiple styles
     const applyStyles = (element, styles) => {
         Object.assign(element.style, styles);
     };
+
 
     // Create the button container
     const botButtonContainer = document.createElement('div');
@@ -130,24 +140,67 @@ function addBotButton() {
         height: "40px",
         width: "40px",
         cursor: "pointer",
-        backgroundColor: "#161d29", // Dark blue color
+        backgroundColor:"#171D28",//Update based on mode
         border: "none", // Borderless for a cleaner look
         borderRadius: "10%", // Circular shape
         boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)", // Subtle shadow
         marginRight: "20px", // Add margin from the right side
     });
 
-    // Create the image element
-    const botButtonImage = document.createElement('img');
-    botButtonImage.src = bot1ImgURL;
-    applyStyles(botButtonImage, {
-        height: "50px", // Adjust to fit inside the button
-        width: "50px",
-    
-    });
+    // Create the button
+    const botButton = document.createElement('button');
 
-    // Append the image to the button container
-    botButtonContainer.appendChild(botButtonImage);
+// Define the two colors
+const defaultColor = "#171D28";
+const smallScreenColor = "#2E384C";
+
+// Apply initial styles
+Object.assign(botButton.style, {
+    backgroundColor: window.innerWidth < 768 ? smallScreenColor : defaultColor,
+    border: "none",
+    borderRadius: "15px",
+    padding: "10px",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "60px",
+    height: "60px",
+    transition: "background-color 0.3s"
+});
+
+// Listen for window resize to update the background color
+window.addEventListener('resize', () => {
+    botButton.style.backgroundColor = window.innerWidth < 768 ? smallScreenColor : defaultColor;
+});
+
+
+    // Create the SVG icon
+    const svgIcon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svgIcon.setAttribute("viewBox", "0 0 122.88 119.35");
+    svgIcon.setAttribute("fill", "white");
+    svgIcon.setAttribute("width", "122.88");
+    svgIcon.setAttribute("height", "119.35");
+
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", "M57.49,29.2V23.53a14.41,14.41,0,0,1-2-.93A12.18,12.18,0,0,1,50.44,7.5a12.39,12.39,0,0,1,2.64-3.95A12.21,12.21,0,0,1,57,.92,12,12,0,0,1,61.66,0,12.14,12.14,0,0,1,72.88,7.5a12.14,12.14,0,0,1,0,9.27,12.08,12.08,0,0,1-2.64,3.94l-.06.06a12.74,12.74,0,0,1-2.36,1.83,11.26,11.26,0,0,1-2,.93V29.2H94.3a15.47,15.47,0,0,1,15.42,15.43v2.29H115a7.93,7.93,0,0,1,7.9,7.91V73.2A7.93,7.93,0,0,1,115,81.11h-5.25v2.07A15.48,15.48,0,0,1,94.3,98.61H55.23L31.81,118.72a2.58,2.58,0,0,1-3.65-.29,2.63,2.63,0,0,1-.63-1.85l1.25-18h-.21A15.45,15.45,0,0,1,13.16,83.18V81.11H7.91A7.93,7.93,0,0,1,0,73.2V54.83a7.93,7.93,0,0,1,7.9-7.91h5.26v-2.3A15.45,15.45,0,0,1,28.57,29.2H57.49ZM82.74,47.32a9.36,9.36,0,1,1-9.36,9.36,9.36,9.36,0,0,1,9.36-9.36Zm-42.58,0a9.36,9.36,0,1,1-9.36,9.36,9.36,9.36,0,0,1,9.36-9.36Zm6.38,31.36a2.28,2.28,0,0,1-.38-.38,2.18,2.18,0,0,1-.52-1.36,2.21,2.21,0,0,1,.46-1.39,2.4,2.4,0,0,1,.39-.39,3.22,3.22,0,0,1,3.88-.08A22.36,22.36,0,0,0,56,78.32a14.86,14.86,0,0,0,5.47,1A16.18,16.18,0,0,0,67,78.22,25.39,25.39,0,0,0,72.75,75a3.24,3.24,0,0,1,3.89.18,3,3,0,0,1,.37.41,2.22,2.22,0,0,1,.42,1.4,2.33,2.33,0,0,1-.58,1.35,2.29,2.29,0,0,1-.43.38,30.59,30.59,0,0,1-7.33,4,22.28,22.28,0,0,1-7.53,1.43A21.22,21.22,0,0,1,54,82.87a27.78,27.78,0,0,1-7.41-4.16l0,0ZM94.29,34.4H28.57A10.26,10.26,0,0,0,18.35,44.63V83.18A10.26,10.26,0,0,0,28.57,93.41h3.17a2.61,2.61,0,0,1,2.41,2.77l-1,14.58L52.45,94.15a2.56,2.56,0,0,1,1.83-.75h40a10.26,10.26,0,0,0,10.22-10.23V44.62A10.24,10.24,0,0,0,94.29,34.4Z");
+    svgIcon.appendChild(path);
+
+    // Add the second SVG to the same container
+    const secondSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    secondSvg.setAttribute("viewBox", "0 0 24 24");
+    secondSvg.setAttribute("fill", "white");
+    secondSvg.setAttribute("width", "24");
+    secondSvg.setAttribute("height", "24");
+
+    const secondPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    secondPath.setAttribute("d", "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z");
+    secondSvg.appendChild(secondPath);
+
+    // Append both SVG icons to the DOM (e.g., body or specific container)
+
+    botButton.appendChild(svgIcon);
+    botButtonContainer.appendChild(botButton);
 
     // Add click event to show the mini page
     botButtonContainer.addEventListener("click", () => {
@@ -164,6 +217,8 @@ function addBotButton() {
 }
 
 
+
+
 function createMiniPageContainer() {
     const miniPage = document.createElement('div');
     miniPage.id = "mini-page";
@@ -171,8 +226,8 @@ function createMiniPageContainer() {
     miniPage.style.top = "50%";
     miniPage.style.left = "50%";
     miniPage.style.transform = "translate(-50%, -50%)";
-    miniPage.style.width = "75%";
-    miniPage.style.height = "85%";
+    miniPage.style.width = "90%";
+    miniPage.style.height = "87%";
     miniPage.style.backgroundColor = "#1E1E2E";
     miniPage.style.border = "1px solid #ccc";
     miniPage.style.boxShadow = "0 4px 8px rgba(0, 0, 0, 0.2)";
@@ -202,6 +257,7 @@ function createHeader(miniPage) {
     const closeButton = createCloseButton(miniPage);
     header.appendChild(title);
     header.appendChild(closeButton);
+
     return header;
 }
 
@@ -209,10 +265,10 @@ function createHeader(miniPage) {
 function createCloseButton(miniPage) {
     const closeButton = document.createElement('button');
     const closeImage = document.createElement('img');
-    closeImage.src = cancelImgUrl;
+    closeImage.src = cancelImgUrl; // Replace with the path to your close icon image
     closeImage.alt = "Close";
-    closeImage.style.width = "20px";
-    closeImage.style.height = "20px";
+    closeImage.style.width = "30px";
+    closeImage.style.height = "30px";
     closeImage.style.cursor = "pointer";
 
     closeButton.appendChild(closeImage);
@@ -222,6 +278,8 @@ function createCloseButton(miniPage) {
     closeButton.style.padding = "0";
     closeButton.addEventListener("click", () => {
         miniPage.remove();
+        miniPageReference = false;
+        // document.removeEventListener("click", handleClickOutside); // Remove the event listener
     });
 
     return closeButton;
@@ -234,7 +292,7 @@ function createChatArea() {
     chatArea.style.overflowY = "auto";
     chatArea.style.marginTop = "20px";
     chatArea.style.padding = "15px";
-    chatArea.style.backgroundColor = "#2C2C3C";
+    chatArea.style.backgroundColor = "#1E1E1E";
     chatArea.style.borderRadius = "15px";
     chatArea.style.marginBottom = "10px";
     chatArea.style.border = "1px solid #444";
@@ -260,12 +318,15 @@ function createInputArea(chatArea) {
 
 //message az ai wala box
 function createInputField(chatArea) {
+    // Create a textarea element
     const inputField = document.createElement('textarea');
+    
+    // Set placeholder and styles for the textarea
     inputField.placeholder = "Message AZ AI  .....";
     inputField.style.padding = "10px";
     inputField.style.border = "2px solid #444";
     inputField.style.borderRadius = "15px";
-    inputField.style.backgroundColor = "#2C2C3C";
+    inputField.style.backgroundColor = "#1e1e2e";
     inputField.style.color = "white";
     inputField.style.resize = "none";  // Prevents resizing the textarea
     inputField.style.minHeight = "30px";  // Minimum height to ensure it starts off visible
@@ -277,6 +338,7 @@ function createInputField(chatArea) {
     inputField.addEventListener('input', function () {
         this.style.height = 'auto';  // Reset height so it can shrink
         this.style.height = Math.min(this.scrollHeight, 200) + 'px';  // Set height based on content, but max 200px
+        
         // Ensure the textarea doesn't shrink smaller than the minHeight
         if (this.scrollHeight < 40) {
             this.style.height = '40px';
@@ -287,11 +349,11 @@ function createInputField(chatArea) {
     inputField.addEventListener('keydown', function (event) {
         if (event.key === "Enter" && !event.shiftKey) { // Check if Enter is pressed without Shift
             event.preventDefault(); // Prevent default newline behavior
-            submitMessage(inputField , chatArea); // Call the submit function
+            submitMessage(inputField, chatArea); // Call the submit function
         }
     });
 
-    return inputField;
+    return inputField; // Return the created input field
 }
 
 
@@ -304,7 +366,7 @@ function createButtonsContainer(inputField, chatArea) {
     buttonsContainer.style.marginTop = "10px";
 
     // Create buttons
-    const copyCodeButton = createCopyCodeButton();
+    const copyCodeButton = createCopyCodeButton(chatArea);
     const clearHistoryButton = createClearHistoryButton(chatArea);
     const sendButton = createSendButton(inputField, chatArea);
 
@@ -322,39 +384,46 @@ function createButtonsContainer(inputField, chatArea) {
 
 function createSendButton(inputField, chatArea) {
     const sendButton = document.createElement('button');
-    sendButton.style.padding = "10px 20px";
-    sendButton.style.background = "linear-gradient(135deg, #1E1E2E, #1A1A24)"; // Dark gradient background
-    sendButton.style.color = "white";
-    sendButton.style.borderRadius = "8px";
-    sendButton.style.border = "none";
-    sendButton.style.cursor = "pointer";
-    sendButton.style.display = "flex"; // Use flex to center the image
-    sendButton.style.alignItems = "center"; // Center the image vertically
-    sendButton.style.justifyContent = "center"; // Center the image horizontally
-    sendButton.style.boxShadow = "0 4px 8px rgba(0, 0, 0, 0.2)"; // Add shadow
-    sendButton.style.transition = "background 0.3s, transform 0.2s, box-shadow 0.3s"; // Transition for hover effects
-    sendButton.setAttribute('aria-label', 'Send message'); // Accessibility
+sendButton.style.padding = "10px 20px";
+sendButton.style.backgroundColor = "rgba(69, 86, 103, 0.02)";
+sendButton.style.backdropFilter = "blur(10px)";
+sendButton.style.borderRadius = "8px";
+sendButton.style.border = "none";
+sendButton.style.cursor = "pointer";
+sendButton.style.display = "flex"; // Use flex to center the image
+sendButton.style.alignItems = "center"; // Center the image vertically
+sendButton.style.justifyContent = "center"; // Center the image horizontally
+sendButton.style.boxShadow = "0 4px 8px rgba(0, 0, 0, 0.2)"; // Add shadow
+sendButton.style.transition = "background 0.3s, transform 0.2s, box-shadow 0.3s"; // Transition for hover effects
+sendButton.setAttribute('aria-label', 'Send message'); // Accessibility
 
-    // Create the image element
-    const sendImage = document.createElement('img');
-    sendImage.src = sendImgUrl; // Replace with the path to your send icon image
-    sendImage.alt = "Send";
-    sendImage.style.width = "30px"; // Set the width of the image
-    sendImage.style.height = "30px"; // Set the height of the image
-    sendImage.style.margin = "0"; // Remove any margin
+// Create the SVG image element
+const sendSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+sendSvg.setAttribute('viewBox', '0 0 524 511.64');
+sendSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+sendSvg.setAttribute('width', '32px');
+sendSvg.setAttribute('height', '32px');
+sendSvg.setAttribute('aria-hidden', 'true');
 
-    // Append the image to the button
-    sendButton.appendChild(sendImage);
+// Create the path for the SVG image
+const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+path.setAttribute('class', 'cls-1');
+path.setAttribute('d', 'M132.63 151.86c-4.48 4.29-11.57 4.12-15.83-.4-4.26-4.53-4.08-11.69.39-15.99L253.24 4.13C255.32 1.6 258.47 0 262 0c3.62 0 6.84 1.7 8.92 4.34l131.74 131.27c4.4 4.37 4.45 11.53.12 15.98a11.121 11.121 0 0 1-15.82.13L273.32 38.49v370.92c0 6.25-5.07 11.32-11.32 11.32-6.26 0-11.33-5.07-11.33-11.32V37.91L132.63 151.86zm368.72 246.7c0-6.25 5.07-11.33 11.32-11.33 6.26 0 11.33 5.08 11.33 11.33v101.76c0 6.25-5.07 11.32-11.33 11.32H11.33C5.07 511.64 0 506.57 0 500.32V398.56c0-6.25 5.07-11.33 11.33-11.33 6.25 0 11.32 5.08 11.32 11.33v90.43h478.7v-90.43z');
+
+// Append the path to the SVG
+sendSvg.appendChild(path);
+
+// Append the SVG to the button
+sendButton.appendChild(sendSvg);
+
 
     // Add hover effects
     sendButton.addEventListener('mouseover', () => {
-        sendButton.style.background = "linear-gradient(135deg, #1A1A24, #16161E)"; // Darker gradient on hover
         sendButton.style.transform = "scale(1.05)"; // Slightly enlarge the button
         sendButton.style.boxShadow = "0 6px 12px rgba(0, 0, 0, 0.3)"; // Increase shadow on hover
     });
 
     sendButton.addEventListener('mouseout', () => {
-        sendButton.style.background = "linear-gradient(135deg, #1E1E2E, #1A1A24)"; // Original gradient
         sendButton.style.transform = "scale(1)"; // Reset size
         sendButton.style.boxShadow = "0 4px 8px rgba(0, 0, 0, 0.2)"; // Reset shadow
     });
@@ -371,6 +440,7 @@ function createSendButton(inputField, chatArea) {
     });
 
     sendButton.addEventListener("click", () => {
+        inputField.style.height = "65px";
         submitMessage(inputField, chatArea); // Call the submit function
     });
 
@@ -384,7 +454,7 @@ function submitMessage(inputField, chatArea) {
         addChatMessage("You", userMessage,chatArea); // Add user message to chat
         askAI(userMessage, addChatMessage,chatArea); // Call the AI function
         inputField.value = ""; // Clear input
-        inputField.style.height = "40px"; // Reset to minimum height
+        inputField.style.height = "65px"; // Reset to minimum height
     } else {
         alert("Please type a message.");
     }
@@ -393,46 +463,42 @@ function submitMessage(inputField, chatArea) {
 
 function createClearHistoryButton(chatArea) {
     const clearHistoryButton = document.createElement('button');
-    clearHistoryButton.style.padding = "10px 20px";
-    clearHistoryButton.style.backgroundColor = "#FF6B6B"; // Subtle red background
-    clearHistoryButton.style.color = "white";
-    clearHistoryButton.style.borderRadius = "12px";
-    clearHistoryButton.style.border = "none";
-    clearHistoryButton.style.cursor = "pointer";
-    clearHistoryButton.style.display = "flex"; // Use flex to center the image
-    clearHistoryButton.style.alignItems = "center"; // Center the image vertically
-    clearHistoryButton.style.justifyContent = "center"; // Center the image horizontally
-    clearHistoryButton.style.transition = "background-color 0.3s, transform 0.2s"; // Smooth hover effect
+    clearHistoryButton.style.backgroundColor = "rgba(141, 103, 103, 0.02)";
+    clearHistoryButton.style.backdropFilter = "blur(10px)";
+clearHistoryButton.style.padding = "10px 20px";
+clearHistoryButton.style.borderRadius = "12px";
+clearHistoryButton.style.border = "none";
+clearHistoryButton.style.cursor = "pointer";
+clearHistoryButton.style.display = "flex"; // Use flex to center the image
+clearHistoryButton.style.alignItems = "center"; // Center the image vertically
+clearHistoryButton.style.justifyContent = "center"; // Center the image horizontally
+clearHistoryButton.style.transition = "background-color 0.3s, transform 0.2s"; // Smooth hover effect
 
-    // Create the tooltip
-    clearHistoryButton.title = "Clear Conversation History";
+// Create the tooltip
+clearHistoryButton.title = "Clear Conversation History";
 
-    // Create the image element
-    const clearImage = document.createElement('img');
-    clearImage.src = binImgUrl;
-    clearImage.alt = "Clear History";
-    clearImage.style.width = "24px"; // Set the width of the image
-    clearImage.style.height = "24px"; // Set the height of the image
-    clearImage.style.marginRight = "8px"; // Add space between icon and text
+// Create the SVG element
+const clearSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+clearSvg.setAttribute("width", "32px");
+clearSvg.setAttribute("height", "32px");
+clearSvg.setAttribute("viewBox", "0 0 109.484 122.88");
+clearSvg.setAttribute("enable-background", "new 0 0 109.484 122.88");
+clearSvg.innerHTML = `<g><path fill-rule="evenodd" clip-rule="evenodd" d="M2.347,9.633h38.297V3.76c0-2.068,1.689-3.76,3.76-3.76h21.144 c2.07,0,3.76,1.691,3.76,3.76v5.874h37.83c1.293,0,2.347,1.057,2.347,2.349v11.514H0V11.982C0,10.69,1.055,9.633,2.347,9.633 L2.347,9.633z M8.69,29.605h92.921c1.937,0,3.696,1.599,3.521,3.524l-7.864,86.229c-0.174,1.926-1.59,3.521-3.523,3.521h-77.3 c-1.934,0-3.352-1.592-3.524-3.521L5.166,33.129C4.994,31.197,6.751,29.605,8.69,29.605L8.69,29.605z M69.077,42.998h9.866v65.314 h-9.866V42.998L69.077,42.998z M30.072,42.998h9.867v65.314h-9.867V42.998L30.072,42.998z M49.572,42.998h9.869v65.314h-9.869 V42.998L49.572,42.998z"/></g>`;
 
-    // Create the text element
-    const buttonText = document.createElement('span');
-    buttonText.innerText = "Clear History";
-    buttonText.style.fontSize = "16px";
-    buttonText.style.fontWeight = "bold";
+// Create the text element
 
-    // Append the image and text to the button
-    clearHistoryButton.appendChild(clearImage);
-    clearHistoryButton.appendChild(buttonText);
+// Append the SVG and text to the button
+clearHistoryButton.appendChild(clearSvg);
+
 
     // Add hover effect
     clearHistoryButton.addEventListener("mouseover", () => {
-        clearHistoryButton.style.backgroundColor = "#FF4C4C"; // Slightly darker red
+        // Slightly darker red
         clearHistoryButton.style.transform = "scale(1.05)"; // Slightly enlarge the button
     });
 
     clearHistoryButton.addEventListener("mouseout", () => {
-        clearHistoryButton.style.backgroundColor = "#FF6B6B";
+    
         clearHistoryButton.style.transform = "scale(1)"; // Reset scale
     });
 
@@ -446,49 +512,60 @@ function createClearHistoryButton(chatArea) {
 }
 
 
-function createCopyCodeButton(codeToCopy) {
-    const copyCodeButton = document.createElement('button');
+function createCopyCodeButton(chatArea) {
+    const copyCodeButton = document.createElement('button'); 
     copyCodeButton.style.padding = "10px 20px";
-    copyCodeButton.style.background = "linear-gradient(135deg, #007BFF, #0056b3)"; // Bright blue gradient
-    copyCodeButton.style.color = "white";
+    
+    copyCodeButton.style.backgroundColor = "rgba(81, 53, 53, 0.02)";
+    copyCodeButton.style.backdropFilter = "blur(10px)";
     copyCodeButton.style.borderRadius = "8px";
     copyCodeButton.style.border = "none";
     copyCodeButton.style.cursor = "pointer";
-    copyCodeButton.style.display = "flex"; // Use flex to center the image
-    copyCodeButton.style.alignItems = "center"; // Center the image vertically
-    copyCodeButton.style.justifyContent = "center"; // Center the image horizontally
+    copyCodeButton.style.display = "flex"; 
+    copyCodeButton.style.alignItems = "center"; 
+    copyCodeButton.style.justifyContent = "center"; 
     copyCodeButton.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.3)"; // Enhanced shadow
     copyCodeButton.style.transition = "background 0.3s, transform 0.2s, box-shadow 0.3s"; // Transition for hover effects
     copyCodeButton.setAttribute('aria-label', 'Copy your code'); // Accessibility
 
     // Create the image element
-    const copyImage = document.createElement('img');
-    copyImage.src = copyImgUrl; // Replace with the path to your copy icon image
-    copyImage.alt = "Copy Code";
-    copyImage.style.width = "24px"; 
-    copyImage.style.height = "24px"; 
-    copyImage.style.marginRight = "8px"; 
+   const svgIcon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+svgIcon.setAttribute("version", "1.1");
+svgIcon.setAttribute("id", "Layer_1");
+svgIcon.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+svgIcon.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
+svgIcon.setAttribute("x", "0px");
+svgIcon.setAttribute("y", "0px");
+svgIcon.setAttribute("viewBox", "0 0 115.77 122.88");
+svgIcon.setAttribute("style", "enable-background:new 0 0 115.77 122.88");
+svgIcon.setAttribute("width", "32px"); // Adjust the size of the SVG
+svgIcon.setAttribute("height", "32px"); // Adjust the size of the SVG
+svgIcon.innerHTML = `<g><path class="st0" d="M89.62,13.96v7.73h12.19h0.01v0.02c3.85,0.01,7.34,1.57,9.86,4.1c2.5,2.51,4.06,5.98,4.07,9.82h0.02v0.02 v73.27v0.01h-0.02c-0.01,3.84-1.57,7.33-4.1,9.86c-2.51,2.5-5.98,4.06-9.82,4.07v0.02h-0.02h-61.7H40.1v-0.02 c-3.84-0.01-7.34-1.57-9.86-4.1c-2.5-2.51-4.06-5.98-4.07-9.82h-0.02v-0.02V92.51H13.96h-0.01v-0.02c-3.84-0.01-7.34-1.57-9.86-4.1 c-2.5-2.51-4.06-5.98-4.07-9.82H0v-0.02V13.96v-0.01h0.02c0.01-3.85,1.58-7.34,4.1-9.86c2.51-2.5,5.98-4.06,9.82-4.07V0h0.02h61.7 h0.01v0.02c3.85,0.01,7.34,1.57,9.86,4.1c2.5,2.51,4.06,5.98,4.07,9.82h0.02V13.96L89.62,13.96z M79.04,21.69v-7.73v-0.02h0.02 c0-0.91-0.39-1.75-1.01-2.37c-0.61-0.61-1.46-1-2.37-1v0.02h-0.01h-61.7h-0.02v-0.02c-0.91,0-1.75,0.39-2.37,1.01 c-0.61,0.61-1,1.46-1,2.37h0.02v0.01v64.59v0.02h-0.02c0,0.91,0.39,1.75,1.01,2.37c0.61,0.61,1.46,1,2.37,1v-0.02h0.01h12.19V35.65 v-0.01h0.02c0.01-3.85,1.58-7.34,4.1-9.86c2.51-2.5,5.98-4.06,9.82-4.07v-0.02h0.02H79.04L79.04,21.69z M105.18,108.92V35.65v-0.02 h0.02c0-0.91-0.39-1.75-1.01-2.37c-0.61-0.61-1.46-1-2.37-1v0.02h-0.01h-61.7h-0.02v-0.02c-0.91,0-1.75,0.39-2.37,1.01 c-0.61,0.61-1,1.46-1,2.37h0.02v0.01v73.27v0.02h-0.02c0,0.91,0.39,1.75,1.01,2.37c0.61,0.61,1.46,1,2.37,1v-0.02h0.01h61.7h0.02 v0.02c0.91,0,1.75-0.39,2.37-1.01c0.61-0.61,1-1.46,1-2.37h-0.02V108.92L105.18,108.92z"/></g>`;
+
+
+
+
     // Optionally, add a text label
-    const copyText = document.createElement('span');
-    copyText.textContent = "Copy Your Code";
-    copyText.style.fontSize = "16px"; // Font size for the text
-    copyText.style.color = "white"; // Text color
-    copyText.style.margin = "0"; // Remove any margin
-    copyText.style.fontFamily = "Arial, sans-serif"; // Modern font
+    // const copyText = document.createElement('span');
+    // copyText.textContent = "Copy Your Code";
+    // copyText.style.fontSize = "16px"; // Font size for the text
+    // copyText.style.color = "white"; // Text color
+    // copyText.style.margin = "0"; // Remove any margin
+    // copyText.style.fontFamily = "Arial, sans-serif"; // Modern font
 
     // Append the image and text to the button
-    copyCodeButton.appendChild(copyImage);
-    copyCodeButton.appendChild(copyText);
+    copyCodeButton.appendChild(svgIcon);
+    // copyCodeButton.appendChild(copyText);
 
     // Add hover effects
     copyCodeButton.addEventListener('mouseover', () => {
-        copyCodeButton.style.background = "linear-gradient(135deg, #0056b3, #004085)"; // Darker gradient on hover
+        // copyCodeButton.style.background = "linear-gradient(135deg, #0056b3, #004085)"; // Darker gradient on hover
         copyCodeButton.style.transform = "scale(1.05)"; // Slightly enlarge the button
         copyCodeButton.style.boxShadow = "0 6px 16px rgba(0, 0, 0, 0.4)"; // Increase shadow on hover
     });
 
     copyCodeButton.addEventListener('mouseout', () => {
-        copyCodeButton.style.background = "linear-gradient(135deg, #007BFF, #0056b3)"; // Original gradient
+        // copyCodeButton.style.background = "linear-gradient(135deg, #007BFF, #0056b3)"; // Original gradient
         copyCodeButton.style.transform = "scale(1)"; // Reset size
         copyCodeButton.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.3)"; // Reset shadow
     });
@@ -505,11 +582,12 @@ function createCopyCodeButton(codeToCopy) {
     });
 
     copyCodeButton.addEventListener('click', () => {
-        navigator.clipboard.writeText(codeToCopy).then(() => {
-            alert("Code copied to clipboard!");
-        }).catch(err => {
-            console.error('Failed to copy: ', err);
-        });
+        addChatMessage("System", 
+            "⚠️ Important: Only that code will be copied which is either submitted or compiled last.", 
+            chatArea);
+        
+        
+        copyCode();
     });
 
     return copyCodeButton;
@@ -616,6 +694,10 @@ function addNavigationListeners(miniPage, currentUrl) {
 
 
 function showMiniPage(currentUrl) {
+
+    if( miniPageReference=== true) return;
+
+    miniPageReference = true;
     const miniPage = createMiniPageContainer();
     const header = createHeader(miniPage);
     const chatArea = createChatArea();
@@ -625,6 +707,19 @@ function showMiniPage(currentUrl) {
     miniPage.appendChild(chatArea);
     miniPage.appendChild(inputArea);
     document.body.appendChild(miniPage);
+
+    miniPage.style.backgroundColor = "rgba(27, 33, 59, 0.27)";
+    miniPage.style.backdropFilter = "blur(5px)";
+
+    const button = document.getElementById('add-bot-button'); // Replace with your button's actual ID or selector
+
+    document.addEventListener('click', (event) => {
+        if (!miniPage.contains(event.target) && !button.contains(event.target)) {
+            miniPageReference = false;
+            miniPage.remove();
+           
+        }
+    } , {capture : true});
 
     addNavigationListeners(miniPage, currentUrl);
     loadPreviousConversation(chatArea);
