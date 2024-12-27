@@ -2,12 +2,14 @@
 function checkForStoredKey() {
   chrome.storage.local.get(['aiKey'], (result) => {
     if (result.aiKey) {
-      document.getElementById('responseOutput').textContent = "API Key already saved.";
+      document.getElementById('responseOutput').textContent = "✅ API Key is correct and saved! You’re all set to use the AI features! 🚀";
     } else {
-      document.getElementById('responseOutput').textContent = "No API Key found. Please enter and save your key.";
+      document.getElementById('responseOutput').textContent = " ❌ No API Key found. Please enter and save your key.";
     }
   });
 }
+
+
 
 // Function to get AZ_AI_KEY from Chrome's local storage
 function getChromeStoredKey() {
@@ -41,20 +43,20 @@ async function saveApiKey() {
         // Refresh the page immediately to update UI
         window.location.reload();
       } else {
-        document.getElementById('responseOutput').textContent = "API Key does not match. Please check the key.";
+        document.getElementById('responseOutput').textContent = "❗API Key does not match. Please check the key.";
       }
     } catch (error) {
-      document.getElementById('responseOutput').textContent = `Error: ${error}`;
+      document.getElementById('responseOutput').textContent = `⚠️ Error: ${error}`;
     }
   } else {
-    document.getElementById('responseOutput').textContent = "Please enter a valid API Key.";
+    document.getElementById('responseOutput').textContent = "❗ Please enter a valid API Key.";
   }
 }
 
 // Function to remove the API key from Chrome's local storage
 function removeApiKey() {
   chrome.storage.local.remove('aiKey', () => {
-    document.getElementById('responseOutput').textContent = "API Key has been removed.";
+    document.getElementById('responseOutput').textContent = "✅ API Key has been removed successfully.";
   });
 
   // Refresh the page immediately to update UI
@@ -66,4 +68,7 @@ document.getElementById('saveKeyButton').addEventListener('click', saveApiKey);
 document.getElementById('removeKeyButton').addEventListener('click', removeApiKey);
 
 // Check if key is already stored in Chrome storage when popup is opened
+
+
+
 checkForStoredKey();

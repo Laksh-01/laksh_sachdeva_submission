@@ -1,29 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400;1,500;1,700&family=Inter:wght@100;200;300;400;500;600;700;800;900&family=Mulish:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Rubik:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AIBot Extension</title>
-    <link rel = "stylesheet"  href="./popup.css">
+    <link rel="stylesheet" href="./popup.css">
     <style>
       body {
-        font-family: Arial, sans-serif;
+        font-family: 'Poppins', sans-serif;
         margin: 0;
         padding: 20px;
-        background-color:#161d29; /* Dark blue background */
-        color: white; /* White text color */
-        width: 350px; /* Adjusted width */
+        background-color: #1e2a3a; /* Sleek dark blue background */
+        color: #f5f5f5; /* Light text color */
+        width: 350px;
         height: auto;
         box-sizing: border-box;
-        border-radius: 10px; /* Rounded corners */
+        border-radius: 10px;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5); /* Subtle shadow for depth */
       }
 
       h1 {
-        font-size: 22px;
+        font-size: 24px;
         text-align: center;
         margin-bottom: 20px;
-        color: #ffffff; /* White color for heading */
+        color: #ffffff;
+        font-weight: 600;
       }
 
       .container {
@@ -32,29 +34,38 @@
         align-items: center;
       }
 
-      /* Styling the input */
+      /* Input Styling */
       #apiKeyInput {
         width: 100%;
         height: 45px;
         margin-bottom: 15px;
         padding: 10px;
         font-size: 16px;
-        border: 1px solid #4caf50; /* Green border */
+        border: 1px solid #4caf50;
         border-radius: 5px;
-        background-color: #2a3d65; /* Dark background for input */
-        color: white;
+        background-color: #29384e;
+        color: #f5f5f5;
+        box-shadow: inset 0px 2px 4px rgba(0, 0, 0, 0.2);
+        transition: 0.3s ease-in-out;
+      }
+
+      #apiKeyInput:focus {
+        border-color: #66bb6a; /* Focused green */
+        outline: none;
+        background-color: #324963;
       }
 
       /* Button Styling */
-      #saveKeyButton,
-      #removeKeyButton {
+      button {
         padding: 12px;
         width: 100%;
         margin-bottom: 10px;
         border-radius: 5px;
         cursor: pointer;
         font-size: 16px;
+        font-weight: 500;
         border: none;
+        transition: all 0.3s ease;
       }
 
       #saveKeyButton {
@@ -64,6 +75,7 @@
 
       #saveKeyButton:hover {
         background-color: #45a049;
+        transform: scale(1.02);
       }
 
       #removeKeyButton {
@@ -73,28 +85,45 @@
 
       #removeKeyButton:hover {
         background-color: #e53935;
+        transform: scale(1.02);
       }
 
       /* Message Styling */
       .message {
         margin-top: 15px;
         padding: 10px;
-        background-color: #333333;
+        background-color: #2e3a4e;
         border-radius: 5px;
-        font-size: 16px;
-        color: #f1f1f1;
+        font-size: 14px;
+        color: #cfd8dc;
+        text-align: center;
+        width: 100%;
+        box-sizing: border-box;
+        box-shadow: inset 0px 1px 3px rgba(0, 0, 0, 0.3);
+      }
+
+      /* Image Styling */
+      #helpImage {
+        margin-top: 20px;
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        border-radius: 10px;
+        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
+      }
+
+      /* Text Styling for AI Bot Info */
+      .ai-info {
+        margin-top: 20px;
+        font-size: 14px;
+        color: #cfd8dc;
         text-align: center;
         width: 100%;
         box-sizing: border-box;
       }
 
-      /* Image Styling */
-      #helpImage {
-        margin-top: 25px;
-        width: 100%;
-        height: 250px; /* Increased image size */
-        object-fit: cover; /* Ensure the image scales proportionally */
-        border-radius: 10px; /* Rounded corners for image */
+      .ai-info strong {
+        color: #66bb6a; /* Green text for AI bot */
       }
     </style>
   </head>
@@ -105,15 +134,16 @@
       <button id="saveKeyButton">Save API Key</button>
       <button id="removeKeyButton">Remove API Key</button>
       <div id="responseOutput" class="message"></div>
-      <img
-        id="helpImage"
-        src="assets/image.png"
-        alt="How to use AI"
-      />
+      
+      <!-- AI Bot Info Text -->
+      <div class="ai-info">
+        <p><strong>To use AI Bot</strong>🚀</p>
+      </div>
+      
+      <!-- Help Image -->
+      <img id="helpImage" src="assets/here.jpg" alt="How to use AI" />
     </div>
-
     <script src="popup.js"></script>
     <script src="dist/bundle.js"></script>
-
   </body>
 </html>

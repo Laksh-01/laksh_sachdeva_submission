@@ -40,7 +40,8 @@
         "assets/chatbot1.png",
         "assets/cancel.png",
         "assets/bin.png",
-        "assets/cpy.png"
+        "assets/cpy.png",
+        "assets/here.jpg"
       ],
       "matches": [
         "<all_urls>"

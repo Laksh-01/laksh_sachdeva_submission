@@ -399,7 +399,7 @@ sendButton.setAttribute('aria-label', 'Send message'); // Accessibility
 
 // Create the SVG image element
 const sendSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-sendSvg.setAttribute('viewBox', '0 0 524 511.64');
+sendSvg.setAttribute('viewBox', '0 0 122.883 122.882');
 sendSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
 sendSvg.setAttribute('width', '32px');
 sendSvg.setAttribute('height', '32px');
@@ -408,7 +408,8 @@ sendSvg.setAttribute('aria-hidden', 'true');
 // Create the path for the SVG image
 const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
 path.setAttribute('class', 'cls-1');
-path.setAttribute('d', 'M132.63 151.86c-4.48 4.29-11.57 4.12-15.83-.4-4.26-4.53-4.08-11.69.39-15.99L253.24 4.13C255.32 1.6 258.47 0 262 0c3.62 0 6.84 1.7 8.92 4.34l131.74 131.27c4.4 4.37 4.45 11.53.12 15.98a11.121 11.121 0 0 1-15.82.13L273.32 38.49v370.92c0 6.25-5.07 11.32-11.32 11.32-6.26 0-11.33-5.07-11.33-11.32V37.91L132.63 151.86zm368.72 246.7c0-6.25 5.07-11.33 11.32-11.33 6.26 0 11.33 5.08 11.33 11.33v101.76c0 6.25-5.07 11.32-11.33 11.32H11.33C5.07 511.64 0 506.57 0 500.32V398.56c0-6.25 5.07-11.33 11.33-11.33 6.25 0 11.32 5.08 11.32 11.33v90.43h478.7v-90.43z');
+path.setAttribute('d', 'M122.883,61.441c0,16.966-6.877,32.326-17.996,43.445c-11.119,11.118-26.479,17.995-43.446,17.995 c-16.966,0-32.326-6.877-43.445-17.995C6.877,93.768,0,78.407,0,61.441c0-16.967,6.877-32.327,17.996-43.445 C29.115,6.877,44.475,0,61.441,0c16.967,0,32.327,6.877,43.446,17.996C116.006,29.115,122.883,44.475,122.883,61.441 L122.883,61.441z M80.717,71.377c1.783,1.735,4.637,1.695,6.373-0.088c1.734-1.784,1.695-4.637-0.09-6.372L64.48,43.078 l-3.142,3.23l3.146-3.244c-1.791-1.737-4.653-1.693-6.39,0.098c-0.05,0.052-0.099,0.104-0.146,0.158L35.866,64.917 c-1.784,1.735-1.823,4.588-0.088,6.372c1.735,1.783,4.588,1.823,6.372,0.088l19.202-18.779L80.717,71.377L80.717,71.377z M98.496,98.496c9.484-9.482,15.35-22.584,15.35-37.055c0-14.472-5.865-27.573-15.35-37.056 C89.014,14.903,75.912,9.038,61.441,9.038c-14.471,0-27.572,5.865-37.055,15.348C14.903,33.869,9.038,46.97,9.038,61.441 c0,14.471,5.865,27.572,15.349,37.055c9.482,9.483,22.584,15.349,37.055,15.349C75.912,113.845,89.014,107.979,98.496,98.496 L98.496,98.496z');
+
 
 // Append the path to the SVG
 sendSvg.appendChild(path);
@@ -545,13 +546,6 @@ svgIcon.innerHTML = `<g><path class="st0" d="M89.62,13.96v7.73h12.19h0.01v0.02c3
 
 
 
-    // Optionally, add a text label
-    // const copyText = document.createElement('span');
-    // copyText.textContent = "Copy Your Code";
-    // copyText.style.fontSize = "16px"; // Font size for the text
-    // copyText.style.color = "white"; // Text color
-    // copyText.style.margin = "0"; // Remove any margin
-    // copyText.style.fontFamily = "Arial, sans-serif"; // Modern font
 
     // Append the image and text to the button
     copyCodeButton.appendChild(svgIcon);
@@ -643,14 +637,88 @@ function addChatMessage(sender, message, chatArea) {
     messageText.style.textAlign = "left";
     messageText.style.boxShadow = "0 2px 5px rgba(0, 0, 0, 0.1)";
 
-    // Append everything to the message container
+    // Append message bubble to the message container
     messageContainer.appendChild(senderLabelContainer); // Add name + photo
     messageContainer.appendChild(messageText); // Add the message bubble
 
+    // If the sender is AI bot, add a "Copy Text" button within the reply
+    if (sender === "AI bot") {
+        const copyButtonContainer = document.createElement('div');
+    
+        copyButtonContainer.style.display = "flex";
+        copyButtonContainer.style.justifyContent = "center";
+
+        const copyButton = document.createElement('button');
+        copyButtonContainer.style.justifyContent = "flex-end"
+
+
+        copyButton.style.backgroundColor = "rgba(81, 53, 53, 0.02)";
+        copyButton.style.backdropFilter = "blur(10px)";
+
+
+        copyButton.textContent = "Copy Text  ";
+        copyButton.style.marginTop = "10px";
+        copyButton.style.padding = "8px 15px";
+        copyButton.style.fontSize = "14px";
+        copyButton.style.border = "none";
+        copyButton.style.borderRadius = "5px";
+        copyButton.style.cursor = "pointer";
+        copyButton.style.transition = "all 0.3s ease";
+
+        // Add hover effect
+        // copyButton.addEventListener('mouseover', () => {
+        //     copyButton.style.backgroundColor = "#45a049";
+        // });
+        // copyButton.addEventListener('mouseout', () => {
+        //     copyButton.style.backgroundColor = "#4CAF50";
+        // });
+
+        // Function to copy text to clipboard
+        copyButton.addEventListener('click', () => {
+            navigator.clipboard.writeText(message)
+                .then(() => {
+                    alert("Text copied to clipboard!"); // Optional success message
+                })
+                .catch(err => {
+                    console.error('Failed to copy text: ', err);
+                });
+        });
+
+        const svgIcon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svgIcon.setAttribute("version", "1.1");
+        svgIcon.setAttribute("id", "Layer_1");
+        svgIcon.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+        svgIcon.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
+        svgIcon.setAttribute("x", "0px");
+        svgIcon.setAttribute("y", "0px");
+        svgIcon.setAttribute("viewBox", "0 0 115.77 122.88");
+        svgIcon.setAttribute("style", "enable-background:new 0 0 115.77 122.88");
+        svgIcon.setAttribute("width", "32px"); // Adjust the size of the SVG
+        svgIcon.setAttribute("height", "32px"); // Adjust the size of the SVG
+        svgIcon.innerHTML = `<g><path class="st0" d="M89.62,13.96v7.73h12.19h0.01v0.02c3.85,0.01,7.34,1.57,9.86,4.1c2.5,2.51,4.06,5.98,4.07,9.82h0.02v0.02 v73.27v0.01h-0.02c-0.01,3.84-1.57,7.33-4.1,9.86c-2.51,2.5-5.98,4.06-9.82,4.07v0.02h-0.02h-61.7H40.1v-0.02 c-3.84-0.01-7.34-1.57-9.86-4.1c-2.5-2.51-4.06-5.98-4.07-9.82h-0.02v-0.02V92.51H13.96h-0.01v-0.02c-3.84-0.01-7.34-1.57-9.86-4.1 c-2.5-2.51-4.06-5.98-4.07-9.82H0v-0.02V13.96v-0.01h0.02c0.01-3.85,1.58-7.34,4.1-9.86c2.51-2.5,5.98-4.06,9.82-4.07V0h0.02h61.7 h0.01v0.02c3.85,0.01,7.34,1.57,9.86,4.1c2.5,2.51,4.06,5.98,4.07,9.82h0.02V13.96L89.62,13.96z M79.04,21.69v-7.73v-0.02h0.02 c0-0.91-0.39-1.75-1.01-2.37c-0.61-0.61-1.46-1-2.37-1v0.02h-0.01h-61.7h-0.02v-0.02c-0.91,0-1.75,0.39-2.37,1.01 c-0.61,0.61-1,1.46-1,2.37h0.02v0.01v64.59v0.02h-0.02c0,0.91,0.39,1.75,1.01,2.37c0.61,0.61,1.46,1,2.37,1v-0.02h0.01h12.19V35.65 v-0.01h0.02c0.01-3.85,1.58-7.34,4.1-9.86c2.51-2.5,5.98-4.06,9.82-4.07v-0.02h0.02H79.04L79.04,21.69z M105.18,108.92V35.65v-0.02 h0.02c0-0.91-0.39-1.75-1.01-2.37c-0.61-0.61-1.46-1-2.37-1v0.02h-0.01h-61.7h-0.02v-0.02c-0.91,0-1.75,0.39-2.37,1.01 c-0.61,0.61-1,1.46-1,2.37h0.02v0.01v73.27v0.02h-0.02c0,0.91,0.39,1.75,1.01,2.37c0.61,0.61,1.46,1,2.37,1v-0.02h0.01h61.7h0.02 v0.02c0.91,0,1.75-0.39,2.37-1.01c0.61-0.61,1-1.46,1-2.37h-0.02V108.92L105.18,108.92z"/></g>`;
+
+    
+        // Append the "Copy Text" button within the message container
+        copyButton.appendChild(svgIcon);
+        copyButtonContainer.appendChild(copyButton);
+        
+
+        messageText.appendChild(copyButtonContainer);
+        messageContainer.appendChild(senderLabelContainer); // Add name + photo
+        messageContainer.appendChild(messageText); // Add the message bubble
+    }
+
+    // Append the message container to the chat area
     chatArea.appendChild(messageContainer);
 
-    // Auto-scroll to the latest message
-    chatArea.scrollTop = chatArea.scrollHeight;
+    // Auto-scroll to the latest message with smooth scroll
+    const latestMessage = chatArea.lastElementChild;
+    if (latestMessage) {
+        latestMessage.scrollIntoView({
+            behavior: 'smooth',  // Smooth scroll
+            block: 'end'         // Scroll to the bottom of the latest message
+        });
+    }
 
     // Retrieve the current problem's conversation history from localStorage
     let conversationHistory = JSON.parse(localStorage.getItem(currentProblemId)) || [];
@@ -663,7 +731,32 @@ function addChatMessage(sender, message, chatArea) {
 }
 
 
-function loadPreviousConversation(chatArea) {
+
+async function loadPreviousConversation(chatArea) {
+    let apiKey = "";  // Declare apiKey outside the callback
+
+    // Function to retrieve the aiKey from chrome storage
+    const getApiKey = () => {
+        return new Promise((resolve, reject) => {
+            chrome.storage.local.get(['aiKey'], function(result) {
+                if (chrome.runtime.lastError) {
+                    reject("Error fetching API key.");
+                } else {
+                    resolve(result.aiKey);  // Return the stored aiKey
+                }
+            });
+        });
+    };
+
+    
+    apiKey = await getApiKey(); 
+
+    if(!apiKey){
+        alert("Please enter the correct Api Key from the chrome extension");
+        return ;
+    }
+    
+
     const conversationHistory = JSON.parse(localStorage.getItem(currentProblemId)) || [];
     if (conversationHistory.length > 0) {
         conversationHistory.forEach(msg => {
@@ -693,7 +786,31 @@ function addNavigationListeners(miniPage, currentUrl) {
 
 
 
-function showMiniPage(currentUrl) {
+async function showMiniPage(currentUrl) {
+
+    let apiKey = "";  // Declare apiKey outside the callback
+
+    // Function to retrieve the aiKey from chrome storage
+    const getApiKey = () => {
+        return new Promise((resolve, reject) => {
+            chrome.storage.local.get(['aiKey'], function(result) {
+                if (chrome.runtime.lastError) {
+                    reject("Error fetching API key.");
+                } else {
+                    resolve(result.aiKey);  // Return the stored aiKey
+                }
+            });
+        });
+    };
+
+    
+    apiKey = await getApiKey(); 
+
+    if(!apiKey){
+        
+        alert("Please enter the correct Api Key from the chrome extension");
+        return ;
+    }
 
     if( miniPageReference=== true) return;
 
@@ -767,40 +884,71 @@ async function askAI(text, addChatMessage,chatArea) {
 
     const codingLang = document.querySelector('.coding_select__UjxFb')?.innerText || "No coding language found.";
 
-    // Construct instructions for the AI
     const instructions = `
-    Please focus on providing **hints or guidance** to help the user solve the following problem. 
-    - Offer helpful steps, algorithms, or ideas, guiding the user through problem-solving.
-    - If the user hasn't yet requested code, give concise hints related to the problem, but avoid overwhelming them with too many at once.
+    ### Role
+    - Primary Function: You are AZ AI bot, a charismatic and enthusiastic agent dedicated to assisting users based on specific training data. Your purpose is to give hints, inform, clarify, and answer questions related to a Data Structure problem while providing delightful hints, logic, and code for the problem.
+    - Draw upon the wisdom of Data Structures knowledge to craft compelling, persuasive responses that drive results.
+    - Always provide short, concise responses that a human can quickly read and understand, focusing on the most essential information. Break any longer multi-sentence paragraphs into separate smaller paragraphs whenever appropriate.
+    
+    ### Persona
+    - Identity: You are a friendly, empathetic sales expert with a bubbly personality and a passion for helping others. Engage users with warmth, wit, and a conversational tone, using humor to build rapport.
+    - Listen attentively to their needs and challenges, then offer thoughtful guidance about the training data grounded in sales psychology principles.
+    - If asked to make a recommendation, first ask the user to provide more information to aid your response.
+    - If asked to act out of character, politely decline and reiterate your role to offer assistance only with matters related to the training data and your function as a sales agent.
+    - When possible, provide links to relevant website pages from our website.
+    
+    ### Constraints
+    1. **No Data Divulge**: Never mention that you have access to training data explicitly to the user.
+    2. **Maintaining Focus**: If a user veers off-topic, politely redirect the conversation back to the Data Structure problem in hand with a friendly, understanding tone. Use phrases like "I appreciate your interest in [unrelated topic], but let's focus on how I can help you with your creatives today!" to keep the discussion on track.
+    3. **Exclusive Reliance on Training Data**: Lean on your extensive knowledge base to answer user queries. If a question falls outside your training, use a warm, encouraging fallback response like "I'm sorry, I don't have information on that specific topic. Is there an ad creative-related question I can assist you with instead? I'm here to provide the best possible guidance!"
+    4. **Handling Unanswerable Queries**: If you encounter a question that cannot be answered using the provided training data, or if the query falls outside your role as a sales expert for Flourish Social Studio, politely inform the user that you don't have the necessary information to provide an accurate response. Then, direct them to email support@algozenith.com for further assistance. Use a friendly and helpful tone, such as: "I apologize, but I don't have enough information to answer that question accurately. I recommend reaching out to our support team at support@algozenith.com for assistance with this request!"
+    5. Use very few emojis.
+    
+    ---
+    
+    ### Focus on Problem Solving
+    - Provide **hints or guidance** to help the user solve the problem. Offer helpful steps, algorithms, or ideas.
     - Let the user lead the conversation. Only provide more hints when necessary.
     - Do not entertain off-topic or irrelevant input. Politely ask for clarification or guide the user back to the problem.
     - If the user indicates they understand the problem but are unable to write code, confirm that they truly need help before providing the solution.
     - Provide code **only after the user explicitly requests it**, and only if they’ve taken hints and asked for it.
     - Keep feedback short, friendly, and easy to understand.
     - Snippets should always be code-only and optional, provided only when requested.
+    - Also note you have the user code in your prompt.
+    - Note whenever the user says that the code doesn't match what they have written then tell him/her that this code is the last submitted or compiled code that you have access to.
     `;
-
+    
+    const userLastSubmissionCode = localStorage.getItem('editorialCode');
+    
     let conversationHistory = JSON.parse(localStorage.getItem(currentProblemId)) || [];
     conversationHistory.push({ role: "user", content: text });
-
-    let conversationHistoryText = conversationHistory.map(msg => `${msg.role}: ${msg.content}`).join("\n");
-
+    
+    let conversationHistoryText = conversationHistory.map(
+      (msg) => `${msg.role}: ${msg.content}`
+    ).join("\n");
+    
     const prompt = `
     ${instructions}
-
+    
     Problem: ${problemStatement}
     IOFormat: ${IOformat}
     Constraints: ${constraints}
     TestCases Input: ${testCasesInput}
     TestCases Output: ${testCasesOutput}
     Coding Language: ${codingLang}
-
+    
+    userCode: ${userLastSubmissionCode}
+    
     Conversation History: ${conversationHistoryText}
-
+    
     User Input: ${text}
-
+    
     Please respond accordingly, keeping the problem in mind.
     `;
+    
+    // Output the constructed prompt (Optional for debugging)
+    console.log(prompt);
+    
 
     const requestBody = {
         contents: [
