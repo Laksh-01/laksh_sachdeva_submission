@@ -1,10 +1,10 @@
-const botImgURL = chrome.runtime.getURL("assets/bot.png");
+const botImgURL = chrome.runtime.getURL("assets/chatbot.png");
 
 const bot1ImgURL = chrome.runtime.getURL("assets/chatbot1.png");
+
 const profileImgUrl = chrome.runtime.getURL("assets/profile.png");
 
 const sendImgUrl = chrome.runtime.getURL("assets/send.png");
-
 
 const cancelImgUrl = chrome.runtime.getURL("assets/cancel.png");
 
@@ -12,12 +12,14 @@ const binImgUrl = chrome.runtime.getURL("assets/bin.png");
 
 const copyImgUrl = chrome.runtime.getURL("assets/cpy.png");
 
+
+const systemImgUrl = chrome.runtime.getURL("assets/system.png");
+
 let currentProblemId = null;
 
 let isScriptInjected = false;
 
 let miniPageReference = false; 
-
 
 
 
@@ -34,50 +36,85 @@ function injectScriptAndListenForXHR() {
     console.error('Failed to inject inject.js script');
   };
 }
+
 window.addEventListener('load', injectScriptAndListenForXHR);
-window.addEventListener('apiCodeExtracted', (event) => {
-    const sourceCode = event.detail.sourceCode;  // Updated variable name
 
-    if (sourceCode) {
-        localStorage.setItem('editorialCode', sourceCode); // Store sourceCode (or editorialCode)
-        console.log("Source Code stored in localStorage:", sourceCode);
 
+window.addEventListener('apiDataExtracted', (event) => {
+    const userId = event.detail.userId;
+    const profilePhoto = event.detail.profilePhoto;
+    const hints = event.detail.hints;  // Assuming 'hints' is part of the event's detail
+    const solutionApproach = event.detail.solutionApproach;  // Assuming 'solutionApproach' is part of the event's detail
+    const editorialCode = event.detail.editorialCode;  // Assuming 'editorialCode' is part of the event's detail
+
+    // Handle the fetched user ID and profile photo
+    if (userId && profilePhoto) {
+        console.log("User ID:", userId);
+        console.log("Profile Photo URL:", profilePhoto);
+
+        try {
+            // Store the extracted values (userId and profilePhoto) in localStorage
+            localStorage.setItem('userId', userId);
+            localStorage.setItem('profilePhoto', profilePhoto);
+            console.log("User data successfully stored in localStorage.");
+        } catch (error) {
+            console.error("Error storing user data in localStorage:", error);
+        }
+
+        // Store additional data (hints, solution approach, editorial code) if available
+        try {
+            if (hints) {
+                localStorage.setItem('hints', JSON.stringify(hints));  // Store hints
+                console.log("Hints successfully stored.");
+            }
+            if (solutionApproach) {
+                localStorage.setItem('solutionApproach', solutionApproach);  // Store solution approach
+                console.log("Solution approach successfully stored.");
+            }
+            if (editorialCode) {
+                localStorage.setItem('editorialCode', JSON.stringify(editorialCode));  // Store editorial code
+                console.log("Editorial code successfully stored.");
+            }
+        } catch (error) {
+            console.error("Error storing additional data:", error);
+        }
+
+        // Send the data to the background script
         chrome.runtime.sendMessage({
-            type: 'api-code-extracted',
-            sourceCode: sourceCode  // Send the correct field (sourceCode)
+            type: 'API_DATA',
+            payload: {
+                userId,
+                profilePhoto,
+                hints,
+                solutionApproach,
+                editorialCode
+            }
+        }, (response) => {
+            if (response?.status === "success") {
+                console.log("Data successfully sent to the background script.");
+            } else {
+                console.error("Failed to send data to the background script.");
+            }
         });
     } else {
-        console.log("No source code to store.");
+        console.log("No user ID or profile photo to store.");
     }
 });
+
+
+
 
 
 
 
 const observer = new MutationObserver(() => {
-    addBotButton(); // Call function to open AI solver
-    updateProblemIdOnUrlChange(); // Update the problem ID based on URL change
-    get_code_from_localStorage();
+    addBotButton(); 
+    updateProblemIdOnUrlChange(); 
 });
 
-// Observe the body for changes (child elements added or removed)
-
 observer.observe(document.body, { childList: true, subtree: true });
-function get_code_from_localStorage() {
-    // Retrieve the code from localStorage
-    const code_written_by_user = localStorage.getItem('editorialCode');
-    
-    // Check if the code exists in localStorage
-    if (code_written_by_user) {
-        console.log("Code retrieved from localStorage:", code_written_by_user);
-        return code_written_by_user;
-    } else {
-        console.log('No code found in localStorage');
-        return null;  // Return null if no code is stored
-    }
-}
 
-// Check if the page is a problem page
+
 function onProblemsPage() {
     return window.location.pathname.startsWith('/problems/');
 }
@@ -86,97 +123,107 @@ function updateProblemIdOnUrlChange() {
     const azProblemUrl = window.location.href;
     const problemId = extractProblemNameFromURL(azProblemUrl);
     currentProblemId = problemId;
-    console.log(currentProblemId);
+    // console.log(currentProblemId);
 }
 
+
 function extractProblemNameFromURL(url) {
-    // Extract the part of the URL after '/problems/' and before the '?'
+   
     const problemNameMatch = url.match(/\/problems\/([^?]+)/);
     if (!problemNameMatch || !problemNameMatch[1]) {
         console.error("Problem name not found in URL.");
         return "UnknownProblem";
     }
 
-    // Get the problem name and make it unique by appending a simple hash
     const problemName = problemNameMatch[1];
     const uniqueId = generateUniqueId(problemName);
     return `${problemName}-${uniqueId}`;
 }
 
-// Function to generate a unique identifier based on the problem name
+
 function generateUniqueId(input) {
     let hash = 0;
     for (let i = 0; i < input.length; i++) {
         const char = input.charCodeAt(i);
-        hash = (hash << 5) - hash + char; // Bitwise manipulation for hash
-        hash |= 0; // Convert to 32-bit integer
+        hash = (hash << 5) - hash + char; 
+        hash |= 0; 
     }
-    return Math.abs(hash); // Ensure the ID is positive
+    return Math.abs(hash); 
 }
 
 
 
-
-
-// Function to add or update the bot button
 function addBotButton() {
     let mode = true;
-    if (!onProblemsPage() || document.getElementById("add-bot-button")) return; // Only add button on problem pages
+    if (!onProblemsPage() || document.getElementById("add-bot-button")) return; 
+
+    const svgIcon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
 
 
-    // Utility function to apply multiple styles
+    
+    const changeButtonColor = (button) => {
+        
+        if (button.getAttribute('aria-checked') === 'true') {
+            svgIcon.style.filter = 'invert(0)';
+        } else {
+            svgIcon.style.filter = 'invert(1)';
+        }
+    };
+    const observeButton = () => {
+        const button = document.querySelector('button[role="switch"]');
+        changeButtonColor(button);
+        const observer = new MutationObserver(() => {
+            changeButtonColor(button);
+        });
+        observer.observe(button, {
+            attributes: true,         
+            attributeFilter: ['aria-checked'] 
+        });
+    };
+    observeButton();
+
+
     const applyStyles = (element, styles) => {
         Object.assign(element.style, styles);
     };
 
-
-    // Create the button container
     const botButtonContainer = document.createElement('div');
+    botButtonContainer.style.background = "inherit";
+
     botButtonContainer.id = "add-bot-button";
     applyStyles(botButtonContainer, {
         display: "flex",
-        alignItems: "center", // Center image vertically
-        justifyContent: "center", // Center image horizontally
+        alignItems: "center", 
+        justifyContent: "center", 
         height: "40px",
         width: "40px",
         cursor: "pointer",
-        backgroundColor:"#171D28",//Update based on mode
-        border: "none", // Borderless for a cleaner look
-        borderRadius: "10%", // Circular shape
-        boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)", // Subtle shadow
-        marginRight: "20px", // Add margin from the right side
+       
+        border: "none", 
+        borderRadius: "10%",
+        marginRight: "20px", 
     });
-
-    // Create the button
     const botButton = document.createElement('button');
+    botButton.style.background = "inherit";
+    
 
-// Define the two colors
-const defaultColor = "#171D28";
-const smallScreenColor = "#2E384C";
 
-// Apply initial styles
-Object.assign(botButton.style, {
-    backgroundColor: window.innerWidth < 768 ? smallScreenColor : defaultColor,
-    border: "none",
-    borderRadius: "15px",
-    padding: "10px",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    width: "60px",
-    height: "60px",
-    transition: "background-color 0.3s"
-});
-
-// Listen for window resize to update the background color
-window.addEventListener('resize', () => {
-    botButton.style.backgroundColor = window.innerWidth < 768 ? smallScreenColor : defaultColor;
-});
+    Object.assign(botButton.style, {
+        border: "none",
+        borderRadius: "15px",
+        padding: "10px",
+        cursor: "pointer",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: "60px",
+        height: "60px",
+        transition: "background-color 0.3s"
+    });
 
 
     // Create the SVG icon
-    const svgIcon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    
     svgIcon.setAttribute("viewBox", "0 0 122.88 119.35");
     svgIcon.setAttribute("fill", "white");
     svgIcon.setAttribute("width", "122.88");
@@ -197,17 +244,14 @@ window.addEventListener('resize', () => {
     secondPath.setAttribute("d", "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z");
     secondSvg.appendChild(secondPath);
 
-    // Append both SVG icons to the DOM (e.g., body or specific container)
-
     botButton.appendChild(svgIcon);
     botButtonContainer.appendChild(botButton);
 
-    // Add click event to show the mini page
+    
     botButtonContainer.addEventListener("click", () => {
-        showMiniPage(); // Call the function to show the mini page
+        showMiniPage();
     });
 
-    // Insert the button into the DOM
     const askDoubtButton = document.querySelector(".Header_resource_heading__cpRp1");
     if (askDoubtButton) {
         askDoubtButton.parentNode.insertAdjacentElement("afterend", botButtonContainer);
@@ -265,21 +309,31 @@ function createHeader(miniPage) {
 function createCloseButton(miniPage) {
     const closeButton = document.createElement('button');
     const closeImage = document.createElement('img');
-    closeImage.src = cancelImgUrl; // Replace with the path to your close icon image
+    closeImage.src = cancelImgUrl;
     closeImage.alt = "Close";
-    closeImage.style.width = "30px";
-    closeImage.style.height = "30px";
+    closeImage.style.width = "45px";
+    closeImage.style.height = "45px";
     closeImage.style.cursor = "pointer";
 
+    // Append the image to the button
     closeButton.appendChild(closeImage);
+
+    // Style the button
     closeButton.style.backgroundColor = "transparent";
     closeButton.style.border = "none";
     closeButton.style.cursor = "pointer";
     closeButton.style.padding = "0";
+
+    // Optional: Add hover effect for better user interaction
+    closeButton.addEventListener('mouseover', () => {
+    closeButton.style.opacity = "0.7";
+    });
+    closeButton.addEventListener('mouseout', () => {
+    closeButton.style.opacity = "1";
+    });
     closeButton.addEventListener("click", () => {
         miniPage.remove();
         miniPageReference = false;
-        // document.removeEventListener("click", handleClickOutside); // Remove the event listener
     });
 
     return closeButton;
@@ -364,8 +418,6 @@ function createButtonsContainer(inputField, chatArea) {
     buttonsContainer.style.justifyContent = 'space-between';
     buttonsContainer.style.width = '100%';
     buttonsContainer.style.marginTop = "10px";
-
-    // Create buttons
     const copyCodeButton = createCopyCodeButton(chatArea);
     const clearHistoryButton = createClearHistoryButton(chatArea);
     const sendButton = createSendButton(inputField, chatArea);
@@ -383,39 +435,68 @@ function createButtonsContainer(inputField, chatArea) {
 
 
 function createSendButton(inputField, chatArea) {
+
+    const sendSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+
+
+    const changeButtonColor = (button) => {
+        
+        if (button.getAttribute('aria-checked') === 'true') {
+           sendSvg.style.filter = 'invert(1)';
+        } else {
+            sendSvg.style.filter = 'invert(0)';
+        }
+    };
+    const observeButton = () => {
+        const button = document.querySelector('button[role="switch"]');
+        changeButtonColor(button);
+        const observer = new MutationObserver(() => {
+            changeButtonColor(button);
+        });
+        observer.observe(button, {
+            attributes: true,         
+            attributeFilter: ['aria-checked'] 
+        });
+    };
+    observeButton();
+
+
     const sendButton = document.createElement('button');
-sendButton.style.padding = "10px 20px";
-sendButton.style.backgroundColor = "rgba(69, 86, 103, 0.02)";
-sendButton.style.backdropFilter = "blur(10px)";
-sendButton.style.borderRadius = "8px";
-sendButton.style.border = "none";
-sendButton.style.cursor = "pointer";
-sendButton.style.display = "flex"; // Use flex to center the image
-sendButton.style.alignItems = "center"; // Center the image vertically
-sendButton.style.justifyContent = "center"; // Center the image horizontally
-sendButton.style.boxShadow = "0 4px 8px rgba(0, 0, 0, 0.2)"; // Add shadow
-sendButton.style.transition = "background 0.3s, transform 0.2s, box-shadow 0.3s"; // Transition for hover effects
-sendButton.setAttribute('aria-label', 'Send message'); // Accessibility
+    sendButton.style.padding = "10px 20px";
+    sendButton.style.backgroundColor = "rgba(114, 128, 178, 0.21)";
+    sendButton.style.backdropFilter = "blur(10px)";
+    sendButton.style.borderRadius = "8px";
+    sendButton.style.border = "none";
+    sendButton.style.cursor = "pointer";
+    sendButton.style.display = "flex"; // Use flex to center the image
+    sendButton.style.alignItems = "center"; // Center the image vertically
+    sendButton.style.justifyContent = "center"; // Center the image horizontally
+    sendButton.style.boxShadow = "0 4px 8px rgba(0, 0, 0, 0.2)"; // Add shadow
+    sendButton.style.transition = "background 0.3s, transform 0.2s, box-shadow 0.3s"; // Transition for hover effects
+    sendButton.setAttribute('aria-label', 'Send message'); // Accessibility
 
-// Create the SVG image element
-const sendSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-sendSvg.setAttribute('viewBox', '0 0 122.883 122.882');
-sendSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-sendSvg.setAttribute('width', '32px');
-sendSvg.setAttribute('height', '32px');
-sendSvg.setAttribute('aria-hidden', 'true');
+    sendButton.title = "send Message";
 
-// Create the path for the SVG image
-const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-path.setAttribute('class', 'cls-1');
-path.setAttribute('d', 'M122.883,61.441c0,16.966-6.877,32.326-17.996,43.445c-11.119,11.118-26.479,17.995-43.446,17.995 c-16.966,0-32.326-6.877-43.445-17.995C6.877,93.768,0,78.407,0,61.441c0-16.967,6.877-32.327,17.996-43.445 C29.115,6.877,44.475,0,61.441,0c16.967,0,32.327,6.877,43.446,17.996C116.006,29.115,122.883,44.475,122.883,61.441 L122.883,61.441z M80.717,71.377c1.783,1.735,4.637,1.695,6.373-0.088c1.734-1.784,1.695-4.637-0.09-6.372L64.48,43.078 l-3.142,3.23l3.146-3.244c-1.791-1.737-4.653-1.693-6.39,0.098c-0.05,0.052-0.099,0.104-0.146,0.158L35.866,64.917 c-1.784,1.735-1.823,4.588-0.088,6.372c1.735,1.783,4.588,1.823,6.372,0.088l19.202-18.779L80.717,71.377L80.717,71.377z M98.496,98.496c9.484-9.482,15.35-22.584,15.35-37.055c0-14.472-5.865-27.573-15.35-37.056 C89.014,14.903,75.912,9.038,61.441,9.038c-14.471,0-27.572,5.865-37.055,15.348C14.903,33.869,9.038,46.97,9.038,61.441 c0,14.471,5.865,27.572,15.349,37.055c9.482,9.483,22.584,15.349,37.055,15.349C75.912,113.845,89.014,107.979,98.496,98.496 L98.496,98.496z');
+    // Create the SVG image element
+    
+    sendSvg.setAttribute('viewBox', '0 0 122.883 122.882');
+    sendSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    sendSvg.setAttribute('width', '32px');
+    sendSvg.setAttribute('height', '32px');
+    sendSvg.setAttribute('aria-hidden', 'true');
+    // sendSvg.style.filter = "invert(1)"
+
+    // Create the path for the SVG image
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('class', 'cls-1');
+    path.setAttribute('d', 'M122.883,61.441c0,16.966-6.877,32.326-17.996,43.445c-11.119,11.118-26.479,17.995-43.446,17.995 c-16.966,0-32.326-6.877-43.445-17.995C6.877,93.768,0,78.407,0,61.441c0-16.967,6.877-32.327,17.996-43.445 C29.115,6.877,44.475,0,61.441,0c16.967,0,32.327,6.877,43.446,17.996C116.006,29.115,122.883,44.475,122.883,61.441 L122.883,61.441z M80.717,71.377c1.783,1.735,4.637,1.695,6.373-0.088c1.734-1.784,1.695-4.637-0.09-6.372L64.48,43.078 l-3.142,3.23l3.146-3.244c-1.791-1.737-4.653-1.693-6.39,0.098c-0.05,0.052-0.099,0.104-0.146,0.158L35.866,64.917 c-1.784,1.735-1.823,4.588-0.088,6.372c1.735,1.783,4.588,1.823,6.372,0.088l19.202-18.779L80.717,71.377L80.717,71.377z M98.496,98.496c9.484-9.482,15.35-22.584,15.35-37.055c0-14.472-5.865-27.573-15.35-37.056 C89.014,14.903,75.912,9.038,61.441,9.038c-14.471,0-27.572,5.865-37.055,15.348C14.903,33.869,9.038,46.97,9.038,61.441 c0,14.471,5.865,27.572,15.349,37.055c9.482,9.483,22.584,15.349,37.055,15.349C75.912,113.845,89.014,107.979,98.496,98.496 L98.496,98.496z');
 
 
-// Append the path to the SVG
-sendSvg.appendChild(path);
+    // Append the path to the SVG
+    sendSvg.appendChild(path);
 
-// Append the SVG to the button
-sendButton.appendChild(sendSvg);
+    // Append the SVG to the button
+    sendButton.appendChild(sendSvg);
 
 
     // Add hover effects
@@ -463,38 +544,61 @@ function submitMessage(inputField, chatArea) {
 
 
 function createClearHistoryButton(chatArea) {
+
+    const clearSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+
+
+    
+    const changeButtonColor = (button) => {
+        
+        if (button.getAttribute('aria-checked') === 'true') {
+           clearSvg.style.filter = 'invert(1)';
+        } else {
+            clearSvg.style.filter = 'invert(0)';
+        }
+    };
+    const observeButton = () => {
+        const button = document.querySelector('button[role="switch"]');
+        changeButtonColor(button);
+        const observer = new MutationObserver(() => {
+            changeButtonColor(button);
+        });
+        observer.observe(button, {
+            attributes: true,         
+            attributeFilter: ['aria-checked'] 
+        });
+    };
+    observeButton();
+
+
+
     const clearHistoryButton = document.createElement('button');
-    clearHistoryButton.style.backgroundColor = "rgba(141, 103, 103, 0.02)";
+    clearHistoryButton.style.backgroundColor = "rgba(114, 128, 178, 0.21)";
     clearHistoryButton.style.backdropFilter = "blur(10px)";
-clearHistoryButton.style.padding = "10px 20px";
-clearHistoryButton.style.borderRadius = "12px";
-clearHistoryButton.style.border = "none";
-clearHistoryButton.style.cursor = "pointer";
-clearHistoryButton.style.display = "flex"; // Use flex to center the image
-clearHistoryButton.style.alignItems = "center"; // Center the image vertically
-clearHistoryButton.style.justifyContent = "center"; // Center the image horizontally
-clearHistoryButton.style.transition = "background-color 0.3s, transform 0.2s"; // Smooth hover effect
+    clearHistoryButton.style.padding = "10px 20px";
+    clearHistoryButton.style.borderRadius = "12px";
+    clearHistoryButton.style.border = "none";
+    clearHistoryButton.style.cursor = "pointer";
+    clearHistoryButton.style.display = "flex"; // Use flex to center the image
+    clearHistoryButton.style.alignItems = "center"; // Center the image vertically
+    clearHistoryButton.style.justifyContent = "center"; // Center the image horizontally
+    clearHistoryButton.style.transition = "background-color 0.3s, transform 0.2s"; // Smooth hover effect
 
-// Create the tooltip
-clearHistoryButton.title = "Clear Conversation History";
+    // Create the tooltip
+    clearHistoryButton.title = "Clear Conversation History";
+    clearSvg.setAttribute("width", "32px");
+    clearSvg.setAttribute("height", "32px");
+    clearSvg.setAttribute("viewBox", "0 0 109.484 122.88");
+    clearSvg.setAttribute("enable-background", "new 0 0 109.484 122.88");
+    clearSvg.innerHTML = `<g><path fill-rule="evenodd" clip-rule="evenodd" d="M2.347,9.633h38.297V3.76c0-2.068,1.689-3.76,3.76-3.76h21.144 c2.07,0,3.76,1.691,3.76,3.76v5.874h37.83c1.293,0,2.347,1.057,2.347,2.349v11.514H0V11.982C0,10.69,1.055,9.633,2.347,9.633 L2.347,9.633z M8.69,29.605h92.921c1.937,0,3.696,1.599,3.521,3.524l-7.864,86.229c-0.174,1.926-1.59,3.521-3.523,3.521h-77.3 c-1.934,0-3.352-1.592-3.524-3.521L5.166,33.129C4.994,31.197,6.751,29.605,8.69,29.605L8.69,29.605z M69.077,42.998h9.866v65.314 h-9.866V42.998L69.077,42.998z M30.072,42.998h9.867v65.314h-9.867V42.998L30.072,42.998z M49.572,42.998h9.869v65.314h-9.869 V42.998L49.572,42.998z"/></g>`;
 
-// Create the SVG element
-const clearSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-clearSvg.setAttribute("width", "32px");
-clearSvg.setAttribute("height", "32px");
-clearSvg.setAttribute("viewBox", "0 0 109.484 122.88");
-clearSvg.setAttribute("enable-background", "new 0 0 109.484 122.88");
-clearSvg.innerHTML = `<g><path fill-rule="evenodd" clip-rule="evenodd" d="M2.347,9.633h38.297V3.76c0-2.068,1.689-3.76,3.76-3.76h21.144 c2.07,0,3.76,1.691,3.76,3.76v5.874h37.83c1.293,0,2.347,1.057,2.347,2.349v11.514H0V11.982C0,10.69,1.055,9.633,2.347,9.633 L2.347,9.633z M8.69,29.605h92.921c1.937,0,3.696,1.599,3.521,3.524l-7.864,86.229c-0.174,1.926-1.59,3.521-3.523,3.521h-77.3 c-1.934,0-3.352-1.592-3.524-3.521L5.166,33.129C4.994,31.197,6.751,29.605,8.69,29.605L8.69,29.605z M69.077,42.998h9.866v65.314 h-9.866V42.998L69.077,42.998z M30.072,42.998h9.867v65.314h-9.867V42.998L30.072,42.998z M49.572,42.998h9.869v65.314h-9.869 V42.998L49.572,42.998z"/></g>`;
 
-// Create the text element
-
-// Append the SVG and text to the button
-clearHistoryButton.appendChild(clearSvg);
+    
+    clearHistoryButton.appendChild(clearSvg);
 
 
     // Add hover effect
     clearHistoryButton.addEventListener("mouseover", () => {
-        // Slightly darker red
         clearHistoryButton.style.transform = "scale(1.05)"; // Slightly enlarge the button
     });
 
@@ -514,10 +618,52 @@ clearHistoryButton.appendChild(clearSvg);
 
 
 function createCopyCodeButton(chatArea) {
+
+    const svgIcon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+
+    svgIcon.setAttribute("version", "1.1");
+    svgIcon.setAttribute("id", "Layer_1");
+    svgIcon.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+    svgIcon.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
+    svgIcon.setAttribute("x", "0px");
+    svgIcon.setAttribute("y", "0px");
+    svgIcon.setAttribute("viewBox", "0 0 115.77 122.88");
+    svgIcon.setAttribute("style", "enable-background:new 0 0 115.77 122.88");
+    svgIcon.setAttribute("width", "32px"); 
+    svgIcon.setAttribute("height", "32px"); 
+
+    svgIcon.innerHTML = `<g><path class="st0" d="M89.62,13.96v7.73h12.19h0.01v0.02c3.85,0.01,7.34,1.57,9.86,4.1c2.5,2.51,4.06,5.98,4.07,9.82h0.02v0.02 v73.27v0.01h-0.02c-0.01,3.84-1.57,7.33-4.1,9.86c-2.51,2.5-5.98,4.06-9.82,4.07v0.02h-0.02h-61.7H40.1v-0.02 c-3.84-0.01-7.34-1.57-9.86-4.1c-2.5-2.51-4.06-5.98-4.07-9.82h-0.02v-0.02V92.51H13.96h-0.01v-0.02c-3.84-0.01-7.34-1.57-9.86-4.1 c-2.5-2.51-4.06-5.98-4.07-9.82H0v-0.02V13.96v-0.01h0.02c0.01-3.85,1.58-7.34,4.1-9.86c2.51-2.5,5.98-4.06,9.82-4.07V0h0.02h61.7 h0.01v0.02c3.85,0.01,7.34,1.57,9.86,4.1c2.5,2.51,4.06,5.98,4.07,9.82h0.02V13.96L89.62,13.96z M79.04,21.69v-7.73v-0.02h0.02 c0-0.91-0.39-1.75-1.01-2.37c-0.61-0.61-1.46-1-2.37-1v0.02h-0.01h-61.7h-0.02v-0.02c-0.91,0-1.75,0.39-2.37,1.01 c-0.61,0.61-1,1.46-1,2.37h0.02v0.01v64.59v0.02h-0.02c0,0.91,0.39,1.75,1.01,2.37c0.61,0.61,1.46,1,2.37,1v-0.02h0.01h12.19V35.65 v-0.01h0.02c0.01-3.85,1.58-7.34,4.1-9.86c2.51-2.5,5.98-4.06,9.82-4.07v-0.02h0.02H79.04L79.04,21.69z M105.18,108.92V35.65v-0.02 h0.02c0-0.91-0.39-1.75-1.01-2.37c-0.61-0.61-1.46-1-2.37-1v0.02h-0.01h-61.7h-0.02v-0.02c-0.91,0-1.75,0.39-2.37,1.01 c-0.61,0.61-1,1.46-1,2.37h0.02v0.01v73.27v0.02h-0.02c0,0.91,0.39,1.75,1.01,2.37c0.61,0.61,1.46,1,2.37,1v-0.02h0.01h61.7h0.02 v0.02c0.91,0,1.75-0.39,2.37-1.01c0.61-0.61,1-1.46,1-2.37h-0.02V108.92L105.18,108.92z"/></g>`;
+
+    
+
+
+    const changeButtonColor = (button) => {
+        
+        if (button.getAttribute('aria-checked') === 'true') {
+           svgIcon.style.filter = 'invert(1)';
+        } else {
+            svgIcon.style.filter = 'invert(0)';
+        }
+    };
+    const observeButton = () => {
+        const button = document.querySelector('button[role="switch"]');
+        changeButtonColor(button);
+        const observer = new MutationObserver(() => {
+            changeButtonColor(button);
+        });
+        observer.observe(button, {
+            attributes: true,         
+            attributeFilter: ['aria-checked'] 
+        });
+    };
+    observeButton();
+
+
+
+
     const copyCodeButton = document.createElement('button'); 
     copyCodeButton.style.padding = "10px 20px";
-    
-    copyCodeButton.style.backgroundColor = "rgba(81, 53, 53, 0.02)";
+    copyCodeButton.style.backgroundColor = "rgba(114, 128, 178, 0.21)";
     copyCodeButton.style.backdropFilter = "blur(10px)";
     copyCodeButton.style.borderRadius = "8px";
     copyCodeButton.style.border = "none";
@@ -526,32 +672,20 @@ function createCopyCodeButton(chatArea) {
     copyCodeButton.style.alignItems = "center"; 
     copyCodeButton.style.justifyContent = "center"; 
     copyCodeButton.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.3)"; // Enhanced shadow
-    copyCodeButton.style.transition = "background 0.3s, transform 0.2s, box-shadow 0.3s"; // Transition for hover effects
-    copyCodeButton.setAttribute('aria-label', 'Copy your code'); // Accessibility
+    copyCodeButton.style.transition = "background 0.3s, transform 0.2s, box-shadow 0.3s";
+    copyCodeButton.setAttribute('aria-label', 'Copy your code');
+    copyCodeButton.title = "Copy your code";
 
-    // Create the image element
-   const svgIcon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-svgIcon.setAttribute("version", "1.1");
-svgIcon.setAttribute("id", "Layer_1");
-svgIcon.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-svgIcon.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
-svgIcon.setAttribute("x", "0px");
-svgIcon.setAttribute("y", "0px");
-svgIcon.setAttribute("viewBox", "0 0 115.77 122.88");
-svgIcon.setAttribute("style", "enable-background:new 0 0 115.77 122.88");
-svgIcon.setAttribute("width", "32px"); // Adjust the size of the SVG
-svgIcon.setAttribute("height", "32px"); // Adjust the size of the SVG
-svgIcon.innerHTML = `<g><path class="st0" d="M89.62,13.96v7.73h12.19h0.01v0.02c3.85,0.01,7.34,1.57,9.86,4.1c2.5,2.51,4.06,5.98,4.07,9.82h0.02v0.02 v73.27v0.01h-0.02c-0.01,3.84-1.57,7.33-4.1,9.86c-2.51,2.5-5.98,4.06-9.82,4.07v0.02h-0.02h-61.7H40.1v-0.02 c-3.84-0.01-7.34-1.57-9.86-4.1c-2.5-2.51-4.06-5.98-4.07-9.82h-0.02v-0.02V92.51H13.96h-0.01v-0.02c-3.84-0.01-7.34-1.57-9.86-4.1 c-2.5-2.51-4.06-5.98-4.07-9.82H0v-0.02V13.96v-0.01h0.02c0.01-3.85,1.58-7.34,4.1-9.86c2.51-2.5,5.98-4.06,9.82-4.07V0h0.02h61.7 h0.01v0.02c3.85,0.01,7.34,1.57,9.86,4.1c2.5,2.51,4.06,5.98,4.07,9.82h0.02V13.96L89.62,13.96z M79.04,21.69v-7.73v-0.02h0.02 c0-0.91-0.39-1.75-1.01-2.37c-0.61-0.61-1.46-1-2.37-1v0.02h-0.01h-61.7h-0.02v-0.02c-0.91,0-1.75,0.39-2.37,1.01 c-0.61,0.61-1,1.46-1,2.37h0.02v0.01v64.59v0.02h-0.02c0,0.91,0.39,1.75,1.01,2.37c0.61,0.61,1.46,1,2.37,1v-0.02h0.01h12.19V35.65 v-0.01h0.02c0.01-3.85,1.58-7.34,4.1-9.86c2.51-2.5,5.98-4.06,9.82-4.07v-0.02h0.02H79.04L79.04,21.69z M105.18,108.92V35.65v-0.02 h0.02c0-0.91-0.39-1.75-1.01-2.37c-0.61-0.61-1.46-1-2.37-1v0.02h-0.01h-61.7h-0.02v-0.02c-0.91,0-1.75,0.39-2.37,1.01 c-0.61,0.61-1,1.46-1,2.37h0.02v0.01v73.27v0.02h-0.02c0,0.91,0.39,1.75,1.01,2.37c0.61,0.61,1.46,1,2.37,1v-0.02h0.01h61.7h0.02 v0.02c0.91,0,1.75-0.39,2.37-1.01c0.61-0.61,1-1.46,1-2.37h-0.02V108.92L105.18,108.92z"/></g>`;
+   
+    
+
+    
 
 
-
-
-
-    // Append the image and text to the button
     copyCodeButton.appendChild(svgIcon);
-    // copyCodeButton.appendChild(copyText);
 
-    // Add hover effects
+
+
     copyCodeButton.addEventListener('mouseover', () => {
         // copyCodeButton.style.background = "linear-gradient(135deg, #0056b3, #004085)"; // Darker gradient on hover
         copyCodeButton.style.transform = "scale(1.05)"; // Slightly enlarge the button
@@ -577,7 +711,7 @@ svgIcon.innerHTML = `<g><path class="st0" d="M89.62,13.96v7.73h12.19h0.01v0.02c3
 
     copyCodeButton.addEventListener('click', () => {
         addChatMessage("System", 
-            "⚠️ Important: Only that code will be copied which is either submitted or compiled last.", 
+            "⚠️ Important: Code copied to clipboard!", 
             chatArea);
         
         
@@ -594,6 +728,9 @@ function addChatMessage(sender, message, chatArea) {
     messageContainer.style.flexDirection = "column";
     messageContainer.style.alignItems = sender === "You" ? "flex-end" : "flex-start";
 
+
+   
+
     // Sender label container
     const senderLabelContainer = document.createElement('div');
     senderLabelContainer.style.display = "flex";
@@ -602,13 +739,19 @@ function addChatMessage(sender, message, chatArea) {
 
     const senderLabel = document.createElement('strong');
     senderLabel.textContent = sender;
-    senderLabel.style.color = sender === "You" ? "#4CAF50" : "#FFD700";
+    senderLabel.style.color = sender === "You" ? "##3CC7B7" : "#FFD8A8)";
     senderLabel.style.fontSize = "14px";
 
     const profileImage = document.createElement('img');
-    profileImage.src = sender === "You" 
-        ? "https://d3pdqc0wehtytt.cloudfront.net/profile-photos/1280ad10-1309-4ca7-8d9a-6bca51210b5c.jpg" 
-        : botImgURL; // Replace with your bot image URL
+
+    if(sender === "You"){
+        profileImage.src = profileImgUrl;
+    }else if(sender === "AI bot"){
+        profileImage.src = botImgURL;
+    }else{
+        profileImage.src = systemImgUrl;
+    }
+   
 
     profileImage.style.width = "20px";
     profileImage.style.height = "20px";
@@ -632,16 +775,27 @@ function addChatMessage(sender, message, chatArea) {
     messageText.style.padding = "10px";
     messageText.style.borderRadius = "10px";
     messageText.style.maxWidth = "60%";
-    messageText.style.backgroundColor = sender === "You" ? "#E8F5E9" : "#FFF8DC";
+    messageText.style.backgroundColor = sender === "You" ? " #B388EB" : "#FFD8A8";
     messageText.style.color = "#333";
     messageText.style.textAlign = "left";
     messageText.style.boxShadow = "0 2px 5px rgba(0, 0, 0, 0.1)";
 
-    // Append message bubble to the message container
-    messageContainer.appendChild(senderLabelContainer); // Add name + photo
-    messageContainer.appendChild(messageText); // Add the message bubble
 
-    // If the sender is AI bot, add a "Copy Text" button within the reply
+    messageContainer.appendChild(senderLabelContainer);
+    messageContainer.appendChild(messageText);
+
+    if (sender === "System") {
+        // Full row for system messages
+        messageContainer.style.width = "100%";
+        messageContainer.style.height = "20%";
+
+        messageContainer.style.alignItems = "center";
+    } else {
+        messageContainer.style.alignItems = sender === "You" ? "flex-end" : "flex-start";
+    }
+
+
+
     if (sender === "AI bot") {
         const copyButtonContainer = document.createElement('div');
     
@@ -665,19 +819,12 @@ function addChatMessage(sender, message, chatArea) {
         copyButton.style.cursor = "pointer";
         copyButton.style.transition = "all 0.3s ease";
 
-        // Add hover effect
-        // copyButton.addEventListener('mouseover', () => {
-        //     copyButton.style.backgroundColor = "#45a049";
-        // });
-        // copyButton.addEventListener('mouseout', () => {
-        //     copyButton.style.backgroundColor = "#4CAF50";
-        // });
 
-        // Function to copy text to clipboard
+        
         copyButton.addEventListener('click', () => {
             navigator.clipboard.writeText(message)
                 .then(() => {
-                    alert("Text copied to clipboard!"); // Optional success message
+                    console.log("ok");
                 })
                 .catch(err => {
                     console.error('Failed to copy text: ', err);
@@ -698,38 +845,33 @@ function addChatMessage(sender, message, chatArea) {
         svgIcon.innerHTML = `<g><path class="st0" d="M89.62,13.96v7.73h12.19h0.01v0.02c3.85,0.01,7.34,1.57,9.86,4.1c2.5,2.51,4.06,5.98,4.07,9.82h0.02v0.02 v73.27v0.01h-0.02c-0.01,3.84-1.57,7.33-4.1,9.86c-2.51,2.5-5.98,4.06-9.82,4.07v0.02h-0.02h-61.7H40.1v-0.02 c-3.84-0.01-7.34-1.57-9.86-4.1c-2.5-2.51-4.06-5.98-4.07-9.82h-0.02v-0.02V92.51H13.96h-0.01v-0.02c-3.84-0.01-7.34-1.57-9.86-4.1 c-2.5-2.51-4.06-5.98-4.07-9.82H0v-0.02V13.96v-0.01h0.02c0.01-3.85,1.58-7.34,4.1-9.86c2.51-2.5,5.98-4.06,9.82-4.07V0h0.02h61.7 h0.01v0.02c3.85,0.01,7.34,1.57,9.86,4.1c2.5,2.51,4.06,5.98,4.07,9.82h0.02V13.96L89.62,13.96z M79.04,21.69v-7.73v-0.02h0.02 c0-0.91-0.39-1.75-1.01-2.37c-0.61-0.61-1.46-1-2.37-1v0.02h-0.01h-61.7h-0.02v-0.02c-0.91,0-1.75,0.39-2.37,1.01 c-0.61,0.61-1,1.46-1,2.37h0.02v0.01v64.59v0.02h-0.02c0,0.91,0.39,1.75,1.01,2.37c0.61,0.61,1.46,1,2.37,1v-0.02h0.01h12.19V35.65 v-0.01h0.02c0.01-3.85,1.58-7.34,4.1-9.86c2.51-2.5,5.98-4.06,9.82-4.07v-0.02h0.02H79.04L79.04,21.69z M105.18,108.92V35.65v-0.02 h0.02c0-0.91-0.39-1.75-1.01-2.37c-0.61-0.61-1.46-1-2.37-1v0.02h-0.01h-61.7h-0.02v-0.02c-0.91,0-1.75,0.39-2.37,1.01 c-0.61,0.61-1,1.46-1,2.37h0.02v0.01v73.27v0.02h-0.02c0,0.91,0.39,1.75,1.01,2.37c0.61,0.61,1.46,1,2.37,1v-0.02h0.01h61.7h0.02 v0.02c0.91,0,1.75-0.39,2.37-1.01c0.61-0.61,1-1.46,1-2.37h-0.02V108.92L105.18,108.92z"/></g>`;
 
     
-        // Append the "Copy Text" button within the message container
         copyButton.appendChild(svgIcon);
         copyButtonContainer.appendChild(copyButton);
         
 
         messageText.appendChild(copyButtonContainer);
-        messageContainer.appendChild(senderLabelContainer); // Add name + photo
-        messageContainer.appendChild(messageText); // Add the message bubble
+        messageContainer.appendChild(senderLabelContainer);
+        messageContainer.appendChild(messageText);
     }
 
-    // Append the message container to the chat area
     chatArea.appendChild(messageContainer);
 
-    // Auto-scroll to the latest message with smooth scroll
+    
     const latestMessage = chatArea.lastElementChild;
     if (latestMessage) {
-        latestMessage.scrollIntoView({
-            behavior: 'smooth',  // Smooth scroll
-            block: 'end'         // Scroll to the bottom of the latest message
-        });
+        chatArea.scrollTop = chatArea.scrollHeight;
     }
 
     // Retrieve the current problem's conversation history from localStorage
     let conversationHistory = JSON.parse(localStorage.getItem(currentProblemId)) || [];
 
-    // Add the new message to the history
+    if(sender !== 'System'){
     conversationHistory.push({ role: sender.toLowerCase(), content: message });
-
-    // Save the updated conversation history for this specific problem
     localStorage.setItem(currentProblemId, JSON.stringify(conversationHistory));
-}
+    }
 
+    
+}
 
 
 async function loadPreviousConversation(chatArea) {
@@ -758,6 +900,9 @@ async function loadPreviousConversation(chatArea) {
     
 
     const conversationHistory = JSON.parse(localStorage.getItem(currentProblemId)) || [];
+
+    console.log(conversationHistory.length);
+
     if (conversationHistory.length > 0) {
         conversationHistory.forEach(msg => {
             if (msg.role === "user") {
@@ -767,16 +912,18 @@ async function loadPreviousConversation(chatArea) {
             }
         });
     }
+    
+    if(conversationHistory.length === 0){
+        addChatMessage("System", "You haven't started the conversation yet.", chatArea);
+    }
 }
 
 
 function addNavigationListeners(miniPage, currentUrl) {
-    // Listener to detect navigation away from the current page
     window.addEventListener('beforeunload', () => {
         miniPage.remove();
     });
 
-    // Listener to detect URL changes (using `popstate` for single-page apps)
     window.addEventListener('popstate', () => {
         if (window.location.href !== currentUrl) {
             miniPage.remove();
@@ -786,18 +933,20 @@ function addNavigationListeners(miniPage, currentUrl) {
 
 
 
+
+
 async function showMiniPage(currentUrl) {
 
-    let apiKey = "";  // Declare apiKey outside the callback
+    if( miniPageReference=== true) return;
 
-    // Function to retrieve the aiKey from chrome storage
+    let apiKey = ""; 
     const getApiKey = () => {
         return new Promise((resolve, reject) => {
             chrome.storage.local.get(['aiKey'], function(result) {
                 if (chrome.runtime.lastError) {
                     reject("Error fetching API key.");
                 } else {
-                    resolve(result.aiKey);  // Return the stored aiKey
+                    resolve(result.aiKey);
                 }
             });
         });
@@ -807,12 +956,13 @@ async function showMiniPage(currentUrl) {
     apiKey = await getApiKey(); 
 
     if(!apiKey){
-        
         alert("Please enter the correct Api Key from the chrome extension");
         return ;
     }
 
-    if( miniPageReference=== true) return;
+
+
+    
 
     miniPageReference = true;
     const miniPage = createMiniPageContainer();
@@ -828,7 +978,7 @@ async function showMiniPage(currentUrl) {
     miniPage.style.backgroundColor = "rgba(27, 33, 59, 0.27)";
     miniPage.style.backdropFilter = "blur(5px)";
 
-    const button = document.getElementById('add-bot-button'); // Replace with your button's actual ID or selector
+    const button = document.getElementById('add-bot-button'); 
 
     document.addEventListener('click', (event) => {
         if (!miniPage.contains(event.target) && !button.contains(event.target)) {
@@ -845,23 +995,21 @@ async function showMiniPage(currentUrl) {
 
 
 async function askAI(text, addChatMessage,chatArea) {
-    let apiKey = "";  // Declare apiKey outside the callback
-
-    // Function to retrieve the aiKey from chrome storage
+    let apiKey = ""; 
     const getApiKey = () => {
         return new Promise((resolve, reject) => {
             chrome.storage.local.get(['aiKey'], function(result) {
                 if (chrome.runtime.lastError) {
                     reject("Error fetching API key.");
                 } else {
-                    resolve(result.aiKey);  // Return the stored aiKey
+                    resolve(result.aiKey); 
                 }
             });
         });
     };
 
     try {
-        apiKey = await getApiKey();  // Wait for the API key to be retrieved from storage
+        apiKey = await getApiKey(); 
     } catch (error) {
         addChatMessage("System", "Error fetching AI key from storage: " + error , chatArea);
         return;
@@ -871,6 +1019,11 @@ async function askAI(text, addChatMessage,chatArea) {
         addChatMessage("System", "AI key is missing or invalid! Please enter it again through the Chrome extension button." , chatArea);
         return;
     }
+
+
+    const hints = JSON.parse(localStorage.getItem('hints')) || [];
+    const editorialCode = JSON.parse(localStorage.getItem('editorialCode')) || [];
+    const solutionApproach = localStorage.getItem('solutionApproach') || '';
 
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
@@ -918,8 +1071,6 @@ async function askAI(text, addChatMessage,chatArea) {
     - Note whenever the user says that the code doesn't match what they have written then tell him/her that this code is the last submitted or compiled code that you have access to.
     `;
     
-    const userLastSubmissionCode = localStorage.getItem('editorialCode');
-    
     let conversationHistory = JSON.parse(localStorage.getItem(currentProblemId)) || [];
     conversationHistory.push({ role: "user", content: text });
     
@@ -937,18 +1088,16 @@ async function askAI(text, addChatMessage,chatArea) {
     TestCases Output: ${testCasesOutput}
     Coding Language: ${codingLang}
     
-    userCode: ${userLastSubmissionCode}
+    Actual Code: ${editorialCode}
+    Hints : ${hints}
+    Solution Approach : ${solutionApproach}
     
     Conversation History: ${conversationHistoryText}
     
     User Input: ${text}
     
     Please respond accordingly, keeping the problem in mind.
-    `;
-    
-    // Output the constructed prompt (Optional for debugging)
-    console.log(prompt);
-    
+    `;    
 
     const requestBody = {
         contents: [
@@ -974,10 +1123,11 @@ async function askAI(text, addChatMessage,chatArea) {
         const result = await response.json();
 
         if (response.ok) {
+            console.log("AI Response:", result);
             const aiResponse = result.candidates?.[0]?.content?.parts?.[0]?.text;
-            console.log("AI Response:", aiResponse);
+            
             conversationHistory.push({ role: "assistant", content: aiResponse });
-            localStorage.setItem(currentProblemId, JSON.stringify(conversationHistory)); // Save updated conversation history
+            localStorage.setItem(currentProblemId, JSON.stringify(conversationHistory));
             addChatMessage("AI bot", aiResponse,chatArea);
         } else {
             console.error("API Error:", result);
@@ -989,26 +1139,90 @@ async function askAI(text, addChatMessage,chatArea) {
 }
 
 
-function copyCode() {
-    // Retrieve the code from localStorage
-    const code_written_by_user = localStorage.getItem('editorialCode');
+function getCurrentProblemId(){
+    const idMatch = window.location.pathname.match(/-(\d+)$/);
+
+    return idMatch ? idMatch[1]:null;
+}
+
+
+
+
+function getIdFromLocalStorage() {
+    // Iterate over all the keys in localStorage
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        
+        // Use regex to extract the numeric part after 'course_'
+        const match = key.match(/^course_(\d+)_/);  // Match the first numeric part after 'course_'
+
+        if (match && match[1]) {
+            const extractedId = match[1];  // The first numeric part
+            console.log(`Found ID: ${extractedId}`);
+            return extractedId;  // Return the ID as soon as it's found
+        }
+    }
+
+    console.log('No matching key found.');
+    return null;  // Return null if no matching key is found
+}
+
+
+
+
+function getLocalStorageValueById(id) {
+    const user_id = getIdFromLocalStorage();
+    const codingLang = document.querySelector('.coding_select__UjxFb')?.innerText || "C++14";
+    const key = `course_${user_id}_${id}_${codingLang}`;
+   
+    console.log(codingLang);
+
+    // Extract the number after 'course_' and before the first '_'
+    const numberMatch = key.match(/course_(\d+)_/);
     
-    // Check if the code exists
+    if (numberMatch) {
+        const extractedNumber = numberMatch[1]; // This gets the number after 'course_' and before the first '_'
+        console.log(`Extracted number from key: ${extractedNumber}`);
+    } else {
+        console.log('No number found in the key');
+    }
+
+    // Get the value from localStorage
+    const value = localStorage.getItem(key);
+
+    if (value !== null) {
+        // Format the value by replacing line breaks and handling \r\n
+        const formattedValue = value
+            .replace(/\\r\\n/g, '\n')  // Replace literal \r\n with actual newlines
+            .replace(/[\r\n]+/g, '\n');  // Replace any newline sequence with a single newline
+
+        console.log(`Value for key ${key}:\n${formattedValue}`);
+        return formattedValue;
+    } else {
+        console.log(`Key ${key} not found`);
+        return null;
+    }
+}
+
+
+
+function copyCode() {
+
+    const id = getCurrentProblemId();
+
+    const code_written_by_user = getLocalStorageValueById(id);
+
     if (code_written_by_user) {
-        // Create a temporary textarea element to copy the code to clipboard
         const tempTextArea = document.createElement('textarea');
         tempTextArea.value = code_written_by_user;
         document.body.appendChild(tempTextArea);
-        
-        // Select and copy the code to clipboard
+
         tempTextArea.select();
         document.execCommand('copy');
         
-        // Remove the temporary textarea element
         document.body.removeChild(tempTextArea);
-        
-        // Send an appropriate message
-        alert("Code copied to clipboard!");
+
+        // alert("Code copied to clipboard!");
     } else {
         alert("No code found in localStorage to copy.");
     }

@@ -9,22 +9,34 @@ chrome.runtime.onInstalled.addListener(() => {
 });
 
 // Listen for incoming messages and handle them
+// Listen for messages from the content script
+// Listen for messages from content scripts or other parts of the extension
+// Listen for messages from content scripts or other parts of the extension
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.type === "api-code-extracted") {
-        console.log("Received extracted code:", message.editorialCode);
-
-        // Fetch the API key from storage when needed
-        chrome.storage.local.get('AZ_AI_KEY', function(result) {
-            const apiKey = result.AZ_AI_KEY;
-            if (apiKey) {
-                // Use the API key securely (e.g., make API requests)
-                console.log("API Key fetched:", apiKey);
-            } else {
-                console.error("API Key not found.");
-            }
+    if (message.type === "API_DATA") {
+        console.log("Received intercepted data:", message.payload);
+        
+        // Store the received data in Chrome's local storage
+        chrome.storage.local.set({ interceptedData: message.payload }, () => {
+            console.log("Data successfully stored in Chrome storage:", message.payload);
         });
-
-        // Process or store the editorialCode as needed
+        
+        // Send a response back to the sender to confirm data has been received and stored
+        sendResponse({ status: "success", message: "Data received and stored." });
     }
 });
 
+// Retrieve data from Chrome storage when the extension icon is clicked
+chrome.action.onClicked.addListener((tab) => {
+    chrome.storage.local.get("interceptedData", (result) => {
+        if (result.interceptedData) {
+            // Log the retrieved data in the console
+            console.log("Retrieved intercepted data:", result.interceptedData);
+
+            // Example: Display the data in an alert popup
+            alert(`Intercepted Data: ${JSON.stringify(result.interceptedData, null, 2)}`);
+        } else {
+            console.log("No data found in Chrome storage.");
+        }
+    });
+});

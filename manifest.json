@@ -30,7 +30,7 @@
     {
       "resources": [
         "monaco-editor/min/vs/**/*", 
-        "assets/bot.png",
+        "assets/chatbot.png",
         "popup.css",
         "popup.js",
         "assets/image.png",
@@ -41,7 +41,8 @@
         "assets/cancel.png",
         "assets/bin.png",
         "assets/cpy.png",
-        "assets/here.jpg"
+        "assets/here.jpg",
+        "assets/system.png"
       ],
       "matches": [
         "<all_urls>"

@@ -1,93 +1,99 @@
 (function() {
     console.log("inject.js script loaded");
-
-    // Intercept fetch requests
     const originalFetch = window.fetch;
     window.fetch = function(url, options) {
-        console.log("Intercepted fetch request:", { url, options });
+        // console.log("Intercepted fetch request:", { url, options });
+        if (url === "https://api2.maang.in/users/profile/private") {
+            return originalFetch.apply(this, arguments)
+                .then((response) => {
+                    try {
+                        // Clone the response
+                        const clonedResponse = response.clone();
+                        clonedResponse.json()
+                            .then(data => {
+                                if (data && data.data) {
+                                    // Extract user ID and profile photo from the API response
+                                    const userId = data.data.id;  // Assuming 'id' is the user ID field
+                                    const profilePhoto = data.data.profile_photo;  // Assuming 'profile_photo' is the profile photo URL
+                                    
+                                    console.log("Extracted User ID:", userId);
+                                    console.log("Extracted Profile Photo URL:", profilePhoto);
 
-        // Dispatch a custom event with the fetch details
-        const fetchEvent = new CustomEvent('xhrDataFetched', {
-            detail: { url, options }
-        });
-        window.dispatchEvent(fetchEvent);
+                                    // Validate the extracted user ID to ensure it's the expected value
+                                    if (typeof userId === "number" && userId > 0) {
+                                        // Store user ID and profile photo only from this URL
+                                        localStorage.setItem('userId', userId);
+                                        localStorage.setItem('profilePhoto', profilePhoto);
+                                        console.log("User ID and profile photo stored.");
 
-        // Capture the response as well
-        return originalFetch.apply(this, arguments)
-            .then((response) => {
-                console.log("Fetch Response:", response);
-
-                // Clone the response so we can read it without affecting the stream
-                const clonedResponse = response.clone();
-
-                clonedResponse.json().then(data => {
-                    console.log("API Response Data:", data);  // Log the full response data for debugging
-                    
-                    // Check if the response contains the 'data' and 'source_code'
-                    if (data && data.data && data.data.source_code) {
-                        const sourceCode = data.data.source_code;  // Accessing the source_code field
-                        console.log("Extracted Source Code:", sourceCode);
-                        
-                        // Send the extracted source code to the content script or background
-                        window.dispatchEvent(new CustomEvent('apiCodeExtracted', {
-                            detail: { sourceCode }
-                        }));
-                    } else {
-                        console.log("Source code not found in response data:", data);
+                                        // Dispatch event with extracted data
+                                        window.dispatchEvent(new CustomEvent('apiDataExtracted', {
+                                            detail: { userId, profilePhoto }
+                                        }));
+                                    } else {
+                                        console.warn("Invalid user ID extracted:", userId);
+                                    }
+                                } else {
+                                    console.log("Data not found in response:", data);
+                                }
+                            })
+                            .catch(err => {
+                                console.error("Error parsing fetch response JSON:", err);
+                            });
+                    } catch (err) {
+                        console.error("Error handling fetch response:", err);
                     }
-                }).catch(err => {
-                    console.error("Error parsing JSON response:", err);
+                    return response;
+                })
+                .catch(error => {
+                    console.error("Fetch error:", error);
                 });
+        }
 
-                return response;
-            })
-            .catch(error => {
-                console.error("Fetch Error:", error);
-            });
+        // If the URL is not the target one, continue with the original fetch
+        return originalFetch.apply(this, arguments);
     };
 
-    // Intercept XMLHttpRequests
     const originalXHR = window.XMLHttpRequest;
     window.XMLHttpRequest = function() {
         const xhr = new originalXHR();
         const _open = xhr.open;
 
         xhr.open = function(method, url, async, user, password) {
-            console.log("Intercepted XHR request:", { method, url });
+            // console.log("Intercepted XHR request:", { method, url });
 
-            // Dispatch the custom event with XHR details
-            const xhrEvent = new CustomEvent('xhrDataFetched', {
-                detail: { method, url }
-            });
-            window.dispatchEvent(xhrEvent);
+            // Intercept request to the specific URL for user ID and profile photo
+            if (url === "https://api2.maang.in/users/profile/private") {
+                xhr.onload = function() {
+                    try {
+                        const data = JSON.parse(xhr.responseText);
+                        if (data && data.data) {
+                            const userId = data.data.id;
+                            const profilePhoto = data.data.profile_photo;
 
-            xhr.onload = function() {
-                console.log("XHR Response:", xhr.responseText);
+                            // console.log("Extracted User ID from XHR:", userId);
+                            // console.log("Extracted Profile Photo URL from XHR:", profilePhoto);
 
-                try {
-                    const data = JSON.parse(xhr.responseText);
-                    console.log("XHR API Response Data:", data);  // Log the full response data for debugging
+                            // Store user ID and profile photo only from this URL
+                            localStorage.setItem('userId', userId);
+                            localStorage.setItem('profilePhoto', profilePhoto);
+                            console.log("User ID and profile photo stored.");
 
-                    // Check if the response contains the 'data' and 'source_code'
-                    if (data && data.data && data.data.source_code) {
-                        const sourceCode = data.data.source_code;  // Accessing the source_code field
-                        console.log("Extracted Source Code from XHR:", sourceCode);
-
-                        // Send the extracted source code to the content script or background
-                        window.dispatchEvent(new CustomEvent('apiCodeExtracted', {
-                            detail: { sourceCode }
-                        }));
-                    } else {
-                        console.log("Source code not found in XHR response:", data);
+                            window.dispatchEvent(new CustomEvent('apiDataExtracted', {
+                                detail: { userId, profilePhoto }
+                            }));
+                        } else {
+                            console.warn("Unexpected data format in XHR response:", data);
+                        }
+                    } catch (error) {
+                        console.error("Error parsing XHR response JSON:", error);
                     }
-                } catch (error) {
-                    console.error("Error parsing XHR response:", error);
-                }
-            };
+                };
 
-            xhr.onerror = function() {
-                console.error("XHR Error:", xhr.statusText);
-            };
+                xhr.onerror = function() {
+                    console.error("XHR error:", { status: xhr.status, statusText: xhr.statusText });
+                };
+            }
 
             _open.apply(this, arguments);
         };
@@ -95,11 +101,3 @@
         return xhr;
     };
 })();
-
-
-
-
-// Inside inject.js or similar script:
-window.dispatchEvent(new CustomEvent('apiCodeExtracted', {
-    detail: { sourceCode }  // Pass the source code properly
-}));
