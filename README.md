@@ -2,7 +2,7 @@
 <h2>🚀 Chrome Extension Project</h2>
 
 <h3>📖 Overview</h3>
-<p>This Chrome extension, developed for the <strong>AZ Winter Hackathon 2024</strong>, showcases innovative features and solutions designed to tackle real-world challenges. The extension leverages AI to provide problem-specific hints, solutions, and interactive support, making it an invaluable tool for developers and coding enthusiasts.</p>
+<p>This Chrome extension, developed for the <strong>AZ Winter Hackathon 2024</strong>, is specifically designed for <strong>maang.in</strong>. It showcases innovative features and solutions aimed at tackling real-world challenges. The extension leverages AI to provide problem-specific hints, solutions, and interactive support, making it an invaluable tool for developers and coding enthusiasts.</p>
 
 <h3>✨ Features</h3>
 <ol>
@@ -53,7 +53,7 @@
 <ol>
     <li><strong>🔧 Install</strong> the extension in your Chrome browser.</li>
     <li><strong>🔑 Open</strong> the extension popup and enter your Gemini API key.</li>
-    <li><strong>🌐 Navigate</strong> to your coding platform and interact with the AI by clicking the button to open the mini page.</li>
+    <li><strong>🌐 Navigate</strong> to <strong>maang.in</strong> and interact with the AI by clicking the button to open the mini page.</li>
     <li><strong>💬 Use</strong> the chatbox to seek hints, solutions, or code from the AI.</li>
     <li><strong>📋 Copy</strong> responses or your code as needed, and clear conversations when done.</li>
     <li><strong>🌈 Enjoy</strong> a consistent experience across dark and light modes!</li>
@@ -65,4 +65,3 @@
     <li><strong>📚 Enhance AI training</strong> for more complex problem-solving.</li>
     <li><strong>🎙️ Add voice interaction capabilities</strong> for hands-free operation.</li>
 </ul>
-
