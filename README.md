@@ -1,7 +1,7 @@
 <h1>AZ Winter Hackathon 2024: AI is Coming!</h1>
 <h2>🚀 Chrome Extension Project</h2>
 
-<h2 style="text-align: center; color: #FF0000; font-size: 2.5em;">📺 <a href="[https://www.youtube.com/watch?v=your_demo_video_link](https://youtube.com/watch?v=BWtD-jlqKxQ&t=65s)" target="_blank" style="text-decoration: none; color: inherit;">Watch the Demo Video on YouTube</a></h2>
+<h2 style="text-align: center; color: #FF0000; font-size: 2.5em;">📺 <a href="https://www.youtube.com/watch?v=BWtD-jlqKxQ&t=65s" target="_blank" style="text-decoration: none; color: inherit;">Watch the Demo Video on YouTube</a></h2>
 <p style="text-align: center; font-size: 1.2em;">Explore the functionalities and features in action!</p>
 
 <h3>📖 Overview</h3>
