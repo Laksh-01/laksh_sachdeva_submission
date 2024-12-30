@@ -23,6 +23,8 @@ let miniPageReference = false;
 
 
 
+
+//intercepting the network request
 function injectScriptAndListenForXHR() {
   if (isScriptInjected) return;
   const script = document.createElement('script');
@@ -36,32 +38,26 @@ function injectScriptAndListenForXHR() {
     console.error('Failed to inject inject.js script');
   };
 }
-
 window.addEventListener('load', injectScriptAndListenForXHR);
-
 
 window.addEventListener('apiDataExtracted', (event) => {
     const userId = event.detail.userId;
     const profilePhoto = event.detail.profilePhoto;
-    const hints = event.detail.hints;  // Assuming 'hints' is part of the event's detail
-    const solutionApproach = event.detail.solutionApproach;  // Assuming 'solutionApproach' is part of the event's detail
-    const editorialCode = event.detail.editorialCode;  // Assuming 'editorialCode' is part of the event's detail
-
-    // Handle the fetched user ID and profile photo
+    const hints = event.detail.hints;  
+    const solutionApproach = event.detail.solutionApproach;
+    const editorialCode = event.detail.editorialCode; 
+    
     if (userId && profilePhoto) {
         console.log("User ID:", userId);
         console.log("Profile Photo URL:", profilePhoto);
 
         try {
-            // Store the extracted values (userId and profilePhoto) in localStorage
             localStorage.setItem('userId', userId);
             localStorage.setItem('profilePhoto', profilePhoto);
             console.log("User data successfully stored in localStorage.");
         } catch (error) {
             console.error("Error storing user data in localStorage:", error);
         }
-
-        // Store additional data (hints, solution approach, editorial code) if available
         try {
             if (hints) {
                 localStorage.setItem('hints', JSON.stringify(hints));  // Store hints
@@ -101,18 +97,14 @@ window.addEventListener('apiDataExtracted', (event) => {
     }
 });
 
-
-
-
-
-
-
 const observer = new MutationObserver(() => {
     addBotButton(); 
     updateProblemIdOnUrlChange(); 
 });
 
 observer.observe(document.body, { childList: true, subtree: true });
+
+
 
 
 function onProblemsPage() {
@@ -123,7 +115,6 @@ function updateProblemIdOnUrlChange() {
     const azProblemUrl = window.location.href;
     const problemId = extractProblemNameFromURL(azProblemUrl);
     currentProblemId = problemId;
-    // console.log(currentProblemId);
 }
 
 
@@ -158,16 +149,19 @@ function addBotButton() {
 
     const svgIcon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
 
-
     
+
+    //changing mode
     const changeButtonColor = (button) => {
-        
         if (button.getAttribute('aria-checked') === 'true') {
+            //dark mode
             svgIcon.style.filter = 'invert(0)';
         } else {
+            //light mode
             svgIcon.style.filter = 'invert(1)';
         }
     };
+
     const observeButton = () => {
         const button = document.querySelector('button[role="switch"]');
         changeButtonColor(button);
@@ -222,7 +216,6 @@ function addBotButton() {
 
 
     // Create the SVG icon
-    
     svgIcon.setAttribute("viewBox", "0 0 122.88 119.35");
     svgIcon.setAttribute("fill", "white");
     svgIcon.setAttribute("width", "122.88");
@@ -246,13 +239,15 @@ function addBotButton() {
     botButtonContainer.appendChild(botButton);
 
     
+
     botButtonContainer.addEventListener("click", () => {
         if(miniPageReference === false) showMiniPage();
     });
 
-    const askDoubtButton = document.querySelector(".Header_resource_heading__cpRp1");
-    if (askDoubtButton) {
-        askDoubtButton.parentNode.insertAdjacentElement("afterend", botButtonContainer);
+
+    const header = document.querySelector(".Header_resource_heading__cpRp1");
+    if (header) {
+        header.parentNode.insertAdjacentElement("afterend", botButtonContainer);
     } else {
         console.warn("The element 'coding_ask_doubt_button__FjwXJ' was not found.");
     }
@@ -877,9 +872,7 @@ function addChatMessage(sender, message, chatArea) {
 
 
 async function loadPreviousConversation(chatArea) {
-    let apiKey = "";  // Declare apiKey outside the callback
-
-    // Function to retrieve the aiKey from chrome storage
+    let apiKey = ""; 
     const getApiKey = () => {
         return new Promise((resolve, reject) => {
             chrome.storage.local.get(['aiKey'], function(result) {
@@ -932,9 +925,6 @@ function addNavigationListeners(miniPage, currentUrl) {
         }
     });
 }
-
-
-
 
 
 async function showMiniPage(currentUrl) {
@@ -1022,11 +1012,31 @@ async function askAI(text, addChatMessage,chatArea) {
         return;
     }
 
+    function safeGetFromLocalStorage(key, defaultValue) {
+        try {
+            const data = localStorage.getItem(key);
+            return data ? JSON.parse(data) : defaultValue;
+        } catch (error) {
+            console.error(`Error parsing localStorage data for key "${key}":, error`);
+            return defaultValue;
+        }
+    }
+    
 
-    const hints = JSON.parse(localStorage.getItem('hints')) || [];
-    const editorialCode = JSON.parse(localStorage.getItem('editorialCode')) || [];
-    const solutionApproach = localStorage.getItem('solutionApproach') || '';
 
+    const hints = safeGetFromLocalStorage('hints', []);
+    const editorialCode = safeGetFromLocalStorage('editorialCode', []);
+    let solutionApproach = '';
+    
+    try {
+        solutionApproach = localStorage.getItem('solutionApproach') || '';
+    } catch (error) {
+        console.error('Error retrieving solutionApproach from localStorage:', error);
+        solutionApproach = '';
+    }
+    
+    
+    
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
     const problemStatement = document.querySelector('.coding_desc__pltWY')?.innerText || "No problem statement found.";
@@ -1039,6 +1049,9 @@ async function askAI(text, addChatMessage,chatArea) {
 
     const codingLang = document.querySelector('.coding_select__UjxFb')?.innerText || "No coding language found.";
 
+
+    
+
     const instructions = `
     ### Role
     - Primary Function: You are AZ AI bot, a charismatic and enthusiastic agent dedicated to assisting users based on specific training data. Your purpose is to give hints, inform, clarify, and answer questions related to a Data Structure problem while providing delightful hints, logic, and code for the problem.
@@ -1046,7 +1059,7 @@ async function askAI(text, addChatMessage,chatArea) {
     - Always provide short, concise responses that a human can quickly read and understand, focusing on the most essential information. Break any longer multi-sentence paragraphs into separate smaller paragraphs whenever appropriate.
     
     ### Persona
-    - Identity: You are a friendly, empathetic sales expert with a bubbly personality and a passion for helping others. Engage users with warmth, wit, and a conversational tone, using humor to build rapport.
+    - Identity: You are a friendly, empathetic data structure expert with a bubbly personality and a passion for helping others. Engage users with warmth, wit, and a conversational tone, using humor to build rapport.
     - Listen attentively to their needs and challenges, then offer thoughtful guidance about the training data grounded in sales psychology principles.
     - If asked to make a recommendation, first ask the user to provide more information to aid your response.
     - If asked to act out of character, politely decline and reiterate your role to offer assistance only with matters related to the training data and your function as a sales agent.
@@ -1061,9 +1074,11 @@ async function askAI(text, addChatMessage,chatArea) {
     
     ---
     
-    ### Focus on Problem Solving
+    ### Task
+    - Focus on Problem Solving by providing hints from time to time.
     - Provide **hints or guidance** to help the user solve the problem. Offer helpful steps, algorithms, or ideas.
     - Let the user lead the conversation. Only provide more hints when necessary.
+    - Do not give too many hints all at once.
     - Do not entertain off-topic or irrelevant input. Politely ask for clarification or guide the user back to the problem.
     - If the user indicates they understand the problem but are unable to write code, confirm that they truly need help before providing the solution.
     - Provide code **only after the user explicitly requests it**, and only if they’ve taken hints and asked for it.
@@ -1071,8 +1086,20 @@ async function askAI(text, addChatMessage,chatArea) {
     - Snippets should always be code-only and optional, provided only when requested.
     - Also note you have the user code in your prompt.
     - Note whenever the user says that the code doesn't match what they have written then tell him/her that this code is the last submitted or compiled code that you have access to.
+
+
+    ###Tone 
+     - Friendly, warm, and understanding.
+     - Conversational yet professional.
+     - Polite and encouraging, with minimal emojis for a human-like interaction.
+
+     -Provide short, actionable guidance.
+     -Craft engaging responses using sales psychology principles.
+      - Handle unanswerable queries politely and direct users to support@algozenith.com if necessary.
     `;
     
+
+
     let conversationHistory = JSON.parse(localStorage.getItem(currentProblemId)) || [];
     conversationHistory.push({ role: "user", content: text });
     
@@ -1148,29 +1175,20 @@ function getCurrentProblemId(){
 }
 
 
-
-
 function getIdFromLocalStorage() {
-    // Iterate over all the keys in localStorage
     for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
-        
-        // Use regex to extract the numeric part after 'course_'
-        const match = key.match(/^course_(\d+)_/);  // Match the first numeric part after 'course_'
-
+        const match = key.match(/^course_(\d+)_/);
         if (match && match[1]) {
-            const extractedId = match[1];  // The first numeric part
+            const extractedId = match[1];
             console.log(`Found ID: ${extractedId}`);
-            return extractedId;  // Return the ID as soon as it's found
+            return extractedId;
         }
     }
 
     console.log('No matching key found.');
-    return null;  // Return null if no matching key is found
+    return null; 
 }
-
-
-
 
 function getLocalStorageValueById(id) {
     const user_id = getIdFromLocalStorage();
@@ -1205,8 +1223,6 @@ function getLocalStorageValueById(id) {
         return null;
     }
 }
-
-
 
 function copyCode() {
 

@@ -1,4 +1,3 @@
-// Function to check if an API key is stored in Chrome storage
 function checkForStoredKey() {
   chrome.storage.local.get(['aiKey'], (result) => {
     if (result.aiKey) {
@@ -10,8 +9,6 @@ function checkForStoredKey() {
 }
 
 
-
-// Function to get AZ_AI_KEY from Chrome's local storage
 function getChromeStoredKey() {
   return new Promise((resolve, reject) => {
     chrome.storage.local.get(['AZ_AI_KEY'], (result) => {
@@ -24,13 +21,12 @@ function getChromeStoredKey() {
   });
 }
 
-// Function to save the API key in Chrome's local storage and verify it
+
 async function saveApiKey() {
   const apiKey = document.getElementById('apiKeyInput').value.trim();
 
   if (apiKey) {
     try {
-      // Get the AZ_AI_KEY from Chrome storage
       const storedKey = await getChromeStoredKey();
 
       // Compare the entered key with the stored AZ_AI_KEY
@@ -53,22 +49,19 @@ async function saveApiKey() {
   }
 }
 
-// Function to remove the API key from Chrome's local storage
+
+
 function removeApiKey() {
   chrome.storage.local.remove('aiKey', () => {
     document.getElementById('responseOutput').textContent = "✅ API Key has been removed successfully.";
   });
 
-  // Refresh the page immediately to update UI
   window.location.reload();
 }
 
 // Set up event listeners
 document.getElementById('saveKeyButton').addEventListener('click', saveApiKey);
 document.getElementById('removeKeyButton').addEventListener('click', removeApiKey);
-
-// Check if key is already stored in Chrome storage when popup is opened
-
 
 
 checkForStoredKey();
